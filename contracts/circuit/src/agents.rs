@@ -11,7 +11,7 @@ use near_sdk::{env, near, AccountId};
 use crate::errors::{add, fail, require, sub, Error};
 use crate::events::emit;
 use crate::policies::{Policy, PolicyJson};
-use crate::{Circuit, MAX_DEPTH};
+use crate::{Circuit, CircuitExt, MAX_DEPTH};
 
 #[near(serializers = [borsh, json])]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

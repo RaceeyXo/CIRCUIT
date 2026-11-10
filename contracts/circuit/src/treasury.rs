@@ -9,7 +9,7 @@ use near_sdk::{env, near, AccountId, NearToken, Promise};
 
 use crate::errors::{add, require, sub, Error};
 use crate::events::emit;
-use crate::Circuit;
+use crate::{Circuit, CircuitExt};
 
 #[near(serializers = [borsh])]
 #[derive(Clone, Debug)]
