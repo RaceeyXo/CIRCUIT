@@ -50,7 +50,8 @@ jobs:
       - name: Sandbox integration, adversarial and concurrency tests
         run: |
           set -o pipefail
-          CIRCUIT_WASM=$PWD/target/near/circuit/circuit.wasm             cargo test -p circuit-sandbox-tests -- --test-threads=2 --nocapture 2>&1 | tee cargo.log
+          export CIRCUIT_WASM=$PWD/target/near/circuit/circuit.wasm
+          cargo test -p circuit-sandbox-tests -- --test-threads=2 --nocapture 2>&1 | tee cargo.log
       - name: Annotate sandbox failures
         if: failure()
         run: python3 .github/scripts/annotate.py cargo.log
@@ -59,8 +60,7 @@ jobs:
         run: |
           bash .github/scripts/summary.sh cargo.log
           if [ -f target/bench/concurrency-sandbox.json ]; then
-            echo "::notice title=concurrency experiment::$(tr -d '
-' < target/bench/concurrency-sandbox.json | tr -s ' ')"
+            echo "::notice title=concurrency experiment::$(tr -d '\n' < target/bench/concurrency-sandbox.json | tr -s ' ')"
           fi
           grep -E "gas burnt|total cost" cargo.log | sed 's/^/::notice title=gas::/' || true
       - uses: actions/upload-artifact@v4
