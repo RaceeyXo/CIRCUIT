@@ -7,3 +7,5 @@ node_modules/
 *.log
 neardev/
 .near-credentials/
+node_modules/
+dist/

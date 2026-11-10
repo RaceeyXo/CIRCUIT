@@ -206,3 +206,10 @@ pub fn reservation_id(r: &ExecutionFinalResult) -> u64 {
     let v: Value = r.clone().json().expect("reserve result");
     v["reservation"]["id"].as_str().unwrap().parse().unwrap()
 }
+
+/// Exact yoctoNEAR → NEAR decimal string (no floating point), for reports.
+pub fn near_str(yocto: u128) -> String {
+    let frac = format!("{:024}", yocto % NEAR);
+    let frac = frac.trim_end_matches('0');
+    if frac.is_empty() { format!("{}", yocto / NEAR) } else { format!("{}.{frac}", yocto / NEAR) }
+}
