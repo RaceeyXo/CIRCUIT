@@ -133,7 +133,8 @@ fn op() -> impl Strategy<Value = Op> {
     ]
 }
 
-/// Suppress the panic messages of expected contract rejections only.
+/// Suppress the panic messages of expected contract rejections only (the mock wraps them as
+/// `HostError(GuestPanic { panic_msg: "CIRCUIT:..." })`).
 fn quiet_rejections() {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
@@ -145,7 +146,7 @@ fn quiet_rejections() {
                 .map(String::as_str)
                 .or_else(|| info.payload().downcast_ref::<&str>().copied())
                 .unwrap_or("");
-            if !msg.starts_with("CIRCUIT:") {
+            if !msg.contains("CIRCUIT:") {
                 default(info);
             }
         }));

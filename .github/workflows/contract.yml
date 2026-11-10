@@ -22,7 +22,7 @@ jobs:
         if: always()
         run: bash .github/scripts/summary.sh cargo.log
 
-  wasm:
+  wasm-and-sandbox:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,3 +47,25 @@ jobs:
         with:
           name: circuit-wasm
           path: target/near/circuit/*.wasm
+      - name: Sandbox integration, adversarial and concurrency tests
+        run: |
+          set -o pipefail
+          CIRCUIT_WASM=$PWD/target/near/circuit/circuit.wasm             cargo test -p circuit-sandbox-tests -- --test-threads=2 --nocapture 2>&1 | tee cargo.log
+      - name: Annotate sandbox failures
+        if: failure()
+        run: python3 .github/scripts/annotate.py cargo.log
+      - name: Sandbox summary
+        if: always()
+        run: |
+          bash .github/scripts/summary.sh cargo.log
+          if [ -f target/bench/concurrency-sandbox.json ]; then
+            echo "::notice title=concurrency experiment::$(tr -d '
+' < target/bench/concurrency-sandbox.json | tr -s ' ')"
+          fi
+          grep -E "gas burnt|total cost" cargo.log | sed 's/^/::notice title=gas::/' || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench
+          path: target/bench/
+          if-no-files-found: ignore
