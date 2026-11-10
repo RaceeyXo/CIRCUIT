@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["contracts/circuit"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+# Security: arithmetic overflow must abort in the deployed wasm, never wrap.
+overflow-checks = true
+
+# Keep local build artifacts small (disk is tight on the dev machine).
+[profile.dev]
+debug = 0
+
+[profile.test]
+debug = 0

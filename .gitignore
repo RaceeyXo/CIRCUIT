@@ -1,0 +1,9 @@
+target/
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.log
+neardev/
+.near-credentials/
