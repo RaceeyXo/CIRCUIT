@@ -157,9 +157,12 @@ sums independently and check them.
 | **Bounded ancestor walk for status** | **Chosen.** `parent` is immutable and depth ≤ 4, so a reserve does ≤ 4 extra agent reads. Revoking any ancestor blocks the whole branch at O(1) cost. |
 | **Branch-level counterparty counters** | **Proposed** (decision D2). Per-agent caps alone are defeated by *splitting*: a parent spreads budget over many children who all pay the same counterparty. With branch counters, each agent x on the path keeps `exposure(x, cp)` and its own policy caps the whole branch. Cost: ≤ depth+1 reads and writes per reserve/release. |
 
-Policy **monotonicity**: when a child is registered or its policy is updated, every field must be
-≤ the parent's. Child policies can therefore never be looser than their ancestors'. Only the parent
-(or the owner, for top-level agents) sets a child's policy.
+Policy **monotonicity**: when a child is registered, every field of its policy must be ≤ the
+parent's. Only the parent (or the owner, for top-level agents) sets a child's policy.
+Monotonicity is not the security boundary, though: `reserve` checks `max_tx_amount`,
+`max_reservation_ttl_ns` and the counterparty cap of **every agent on the path**, so a parent's
+limits bind its whole branch even if a child's own policy were looser. Policies are immutable
+after registration in the MVP; `update_policy` is deferred.
 
 Gas: the reserve path is O(depth) storage operations with depth ≤ 4, which is bounded. The
 real numbers will be **measured** in sandbox and recorded in `docs/benchmarks.md`. No estimates
@@ -239,18 +242,26 @@ create top-level agents. In production these should be a multisig/DAO, or the fu
 should be removed after deploy. The simulator holds every agent's key, so the demo shows
 contract enforcement, **not** key isolation between agents.
 
-## 7. Contract interface (draft)
+## 7. Contract interface (as implemented)
 
 Mutating: `new(owner)`, `fund_treasury()`, `withdraw_unallocated(amount)`,
-`register_agent(agent, parent?, policy, allocation)`, `delegate_budget(child, amount)`,
-`reclaim_budget(child, amount)`, `update_policy(agent, policy)`, `revoke_agent(agent)`,
+`register_agent(agent_id, parent?, policy, allocation)`, `delegate_budget(child, amount)`,
+`reclaim_budget(child, amount)`, `revoke_agent(agent)`,
 `reserve(request_id, counterparty, amount, ttl_ns)`, `execute(reservation_id)`,
-`on_execute(reservation_id)` (private), `release(reservation_id)`, `release_expired(ids)`,
-`set_paused(bool)`.
+`on_execute(reservation_id)` (private), `release(reservation_id)`,
+`release_expired(reservation_ids)`, `set_paused(paused)`.
 
-Views: `get_treasury`, `get_agent`, `get_agents(from, limit)`, `get_reservation`,
+Views: `get_treasury`, `get_agent`, `get_agents(from_index, limit)`, `get_reservation`,
 `get_reservations(from_id, limit)`, `get_reservation_by_request(agent, request_id)`,
-`get_exposure(agent, counterparty)`, `get_available(agent)`.
+`get_exposure(agent, counterparty)`. An agent's `available` is a field of the agent view.
+
+Implementation notes:
+* `execute` returns the transfer promise chained to `on_execute`, so the transaction's final
+  result is `true` (settled) or `false` (transfer failed, back to RESERVED).
+* `on_execute` reads the raw promise result with a zero-byte bound instead of JSON-decoding it.
+  A plain transfer returns no data, and a decode error would panic inside the callback.
+* Request identity is `(agent, request_id, counterparty, amount)`; `ttl_ns` is not part of it.
+* Storage deposits are not refundable: reservation records are kept as the audit trail.
 
 Authority:
 * `register_agent`: the owner registers top-level agents (funded from `treasury_unallocated`).

@@ -203,6 +203,6 @@ pub fn rejection_code(r: &ExecutionFinalResult) -> Option<String> {
 }
 
 pub fn reservation_id(r: &ExecutionFinalResult) -> u64 {
-    let v: Value = r.json().expect("reserve result");
+    let v: Value = r.clone().json().expect("reserve result");
     v["reservation"]["id"].as_str().unwrap().parse().unwrap()
 }

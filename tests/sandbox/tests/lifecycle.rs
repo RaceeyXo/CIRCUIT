@@ -23,7 +23,7 @@ async fn payout_moves_real_funds_and_settles() -> Result<()> {
     let before = env.balance(vendor.id()).await?;
     let ex = env.execute(&agent, id).await?;
     assert!(ex.is_success(), "{ex:?}");
-    assert!(ex.json::<bool>()?, "execute should resolve to settled = true");
+    assert!(ex.clone().json::<bool>()?, "execute should resolve to settled = true");
     println!("execute gas burnt: {} Tgas", ex.total_gas_burnt.as_tgas());
     let after = env.balance(vendor.id()).await?;
     assert_eq!(after - before, 2 * NEAR, "vendor receives exactly the reserved amount");
@@ -158,7 +158,7 @@ async fn duplicates_and_revocation_on_chain() -> Result<()> {
     let id = reservation_id(&first);
     for _ in 0..3 {
         let again = env.reserve(&grandchild, "dup", vendor.id(), NEAR / 2, HOUR_NS).await?;
-        let v: serde_json::Value = again.json()?;
+        let v: serde_json::Value = again.clone().json()?;
         assert_eq!(v["duplicate"], true);
         assert_eq!(reservation_id(&again), id);
     }
