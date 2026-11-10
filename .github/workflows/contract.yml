@@ -18,6 +18,9 @@ jobs:
       - name: Annotate failures
         if: failure()
         run: python3 .github/scripts/annotate.py cargo.log
+      - name: Summary
+        if: always()
+        run: bash .github/scripts/summary.sh cargo.log
 
   wasm:
     runs-on: ubuntu-latest
@@ -37,6 +40,9 @@ jobs:
       - name: Annotate failures
         if: failure()
         run: python3 .github/scripts/annotate.py cargo.log
+      - name: Summary
+        if: always()
+        run: bash .github/scripts/summary.sh cargo.log
       - uses: actions/upload-artifact@v4
         with:
           name: circuit-wasm
