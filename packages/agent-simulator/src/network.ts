@@ -50,7 +50,11 @@ export async function connect(kind: "sandbox" | "external"): Promise<Network> {
   if (/^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(key)) key = `ed25519:${key}`;
   // Diagnostics never print any part of the key.
   if (!/^ed25519:[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(key)) {
-    throw new Error(`CIRCUIT_FUNDER_KEY is not an ed25519 private key (length ${key.length})`);
+    // Characters outside the base58 alphabet are by definition not key material, so naming them is safe.
+    const body = key.startsWith("ed25519:") ? key.slice(8) : key;
+    const bad = [...body].map((c, i) => ({ c, i })).filter(({ c }) => !/[1-9A-HJ-NP-Za-km-z]/.test(c));
+    const where = bad.map(({ c, i }) => `${JSON.stringify(c)}@${i}`).join(", ");
+    throw new Error(`CIRCUIT_FUNDER_KEY is not an ed25519 private key (length ${key.length}; non-base58 characters: ${where || "none"})`);
   }
   const pair = KeyPair.fromString(key as KeyPairString);
   const funder = new Account(funderId, provider, key as KeyPairString);
