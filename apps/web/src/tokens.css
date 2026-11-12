@@ -1,0 +1,72 @@
+/* CIRCUIT design tokens: shared by the landing page and the console. */
+:root {
+  --bg: #070707;
+  --surface: #121212;
+  --surface-2: #1a1a1a;
+  --line: #262626;
+  --line-dash: #3a3a3a;
+  --ink: #f6f4ef;
+  --ink-2: #bdbab3;
+  --muted: #85827b;
+
+  --accent: #f5b544; /* signal amber: the one colour that means "money under control" */
+  --accent-ink: #1a1204; /* text on accent */
+  --accent-soft: rgb(245 181 68 / 0.12);
+
+  --ok: #6fd39a;
+  --bad: #ff7a6b;
+  --spent: #7fb2ff;
+  --reserved: var(--accent);
+  --flight: #ff9d5c;
+  --delegated: #b9a7ff;
+  --idle: #3b403d;
+  --free: #1d1d1d;
+
+  --radius: 20px;
+  --radius-sm: 10px;
+  --pill: 999px;
+
+  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.num, code, pre { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Floating capsule navigation */
+.nav-wrap { position: sticky; top: 16px; z-index: 50; display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+.nav {
+  pointer-events: auto; display: flex; align-items: center; gap: 28px; width: min(1180px, 100%);
+  padding: 10px 10px 10px 22px; border-radius: var(--pill); border: 1px solid transparent;
+  transition: width 0.35s ease, background 0.35s ease, border-color 0.35s ease, backdrop-filter 0.35s ease;
+}
+.nav.floating { width: min(860px, 100%); background: rgb(18 18 18 / 0.78); border-color: var(--line); backdrop-filter: blur(14px); }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 650; letter-spacing: 0.14em; font-size: 15px; }
+.logo svg { color: var(--accent); }
+.nav-links { display: flex; gap: 22px; margin-left: auto; font-size: 15px; }
+.nav-links a { text-decoration: none; color: var(--ink-2); }
+.nav-links a:hover, .nav-links a[aria-current="page"] { color: var(--ink); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer; text-decoration: none;
+  background: var(--accent); color: var(--accent-ink); font-weight: 600; border-radius: var(--pill);
+  padding: 12px 22px; transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn.sm { padding: 9px 16px; font-size: 14px; }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-dash); }
+@media (max-width: 720px) { .nav-links { display: none; } .nav { gap: 12px; } .nav .btn { margin-left: auto; } }
+
+.label { display: inline-block; padding: 7px 16px; border-radius: var(--pill); border: 1px solid var(--line-dash); font-size: 14px; font-weight: 500; }
+.pill { display: inline-block; font: 500 11px/1.6 var(--mono); padding: 1px 8px; border-radius: var(--pill); border: 1px solid currentColor; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -1,4 +1,4 @@
-import "./style.css";
+import "./app.css";
 
 import type { AgentView, ReservationView, TreasuryView } from "@circuit/shared/types";
 import { formatNear } from "@circuit/shared/units";

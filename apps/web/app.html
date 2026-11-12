@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="CIRCUIT: on-chain financial control for autonomous agent networks on NEAR." />
+    <title>CIRCUIT · Console</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23070707'/%3E%3Cpath d='M5 16h7l3-7 4 14 3-7h5' stroke='%23f5b544' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="nav-wrap">
+      <nav class="nav floating" aria-label="Main">
+        <a class="logo" href="./">
+          <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M3 16h8l3-8 4 16 3-8h8" stroke="currentColor" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          CIRCUIT
+        </a>
+        <div class="nav-links">
+          <a href="./">Overview</a>
+          <a href="./app.html" aria-current="page">Console</a>
+          <a href="https://github.com/RaceeyXo/CIRCUIT" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+    </div>
+
+    <header class="top">
+      <div class="brand">
+        <div>
+          <h1>Treasury console</h1>
+          <p class="tag">Read-only. Every number is read from the contract at final finality.</p>
+        </div>
+      </div>
+      <form id="contract-form" class="contract">
+        <label for="contract">Contract</label>
+        <input id="contract" placeholder="circuit….testnet" spellcheck="false" autocomplete="off" />
+        <button type="submit">Watch</button>
+        <span id="net" class="muted small"></span>
+      </form>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="live" aria-selected="true">Live state</button>
+      <button role="tab" data-tab="evidence" aria-selected="false">Evidence</button>
+      <span id="status" class="status idle" role="status">idle</span>
+    </nav>
+
+    <main>
+      <section id="live">
+        <section class="card" aria-labelledby="h-treasury">
+          <h2 id="h-treasury">Treasury</h2>
+          <div id="treasury"><p class="empty">Enter a CIRCUIT contract account to watch its treasury.</p></div>
+        </section>
+        <div class="cols">
+          <section class="card" aria-labelledby="h-agents">
+            <h2 id="h-agents">Agent hierarchy <span class="muted small">available / allocation · click for policy</span></h2>
+            <div class="legend"><span><i class="sw spent"></i>Spent</span><span><i class="sw reserved"></i>Reserved</span><span><i class="sw delegated"></i>Delegated</span><span><i class="sw avail"></i>Available</span></div>
+            <div id="agents"></div>
+          </section>
+          <section class="card" aria-labelledby="h-res">
+            <h2 id="h-res">Reservations <span class="muted small">newest first</span></h2>
+            <div id="reservations"></div>
+          </section>
+        </div>
+        <p class="foot muted small">Read-only. Every number is read from the contract's view methods at final finality. The contract is the only authority; this page cannot move funds.</p>
+      </section>
+
+      <section id="evidence" hidden>
+        <section class="card">
+          <h2>Simulator evidence</h2>
+          <p class="muted">Reports produced by <code>circuit-sim</code>. Each one lists every check and every transaction as the chain reported it.</p>
+          <label class="file">Load report JSON <input id="report-file" type="file" accept="application/json" multiple /></label>
+        </section>
+        <div id="reports"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
