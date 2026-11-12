@@ -1,0 +1,156 @@
+{
+  "scenario": "spec",
+  "network": "external",
+  "contract": "circuitmwdgnus36.circuit-demo.testnet",
+  "started_at": "2026-11-12T11:24:59.786Z",
+  "finished_at": "2026-11-12T11:25:31.364Z",
+  "passed": true,
+  "checks": [
+    {
+      "name": "requests over-subscribe the allocation",
+      "pass": true,
+      "detail": "0.140000 NEAR requested vs 0.100000 NEAR"
+    },
+    {
+      "name": "accepted total ≤ allocation",
+      "pass": true,
+      "detail": "0.090000 NEAR accepted"
+    },
+    {
+      "name": "every rejection is INSUFFICIENT_BUDGET",
+      "pass": true,
+      "detail": "0.050000 NEAR: INSUFFICIENT_BUDGET"
+    },
+    {
+      "name": "no request was rejected that would have fit",
+      "pass": true,
+      "detail": "each rejected request exceeds the remaining budget at decision time"
+    },
+    {
+      "name": "all accepted payouts settle",
+      "pass": true,
+      "detail": "#0: true, #1: true"
+    },
+    {
+      "name": "each vendor received exactly its reserved amount",
+      "pass": true,
+      "detail": "0.060000 NEAR, 0.030000 NEAR"
+    },
+    {
+      "name": "treasury spent equals accepted total",
+      "pass": true,
+      "detail": "spent 0.090000 NEAR"
+    },
+    {
+      "name": "invariants (after spec)",
+      "pass": true,
+      "detail": "I1–I5, I8 hold over 1 agents"
+    }
+  ],
+  "metrics": {
+    "accepted": [
+      "0.060000 NEAR",
+      "0.030000 NEAR"
+    ],
+    "rejected": [
+      "0.050000 NEAR"
+    ]
+  },
+  "transactions": [
+    {
+      "step": "setup",
+      "actor": "circuitmwdgnus36.circuit-demo.testnet",
+      "method": "new",
+      "ok": true,
+      "txHash": "F9bS663eS1Nozqgazcgd1xfazzGQoKfRsZHqCJMWR65W",
+      "blockHash": "8ENtRs6m8W83TWesx8aujgd786rUQibGf6MUmHmzvLLU",
+      "gasBurnt": "1865349709919",
+      "events": []
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdgnrtz5.circuit-demo.testnet",
+      "method": "fund_treasury",
+      "ok": true,
+      "txHash": "69RKGkZGY9ARd3ePgBR8GcvFuinNjc3dNxY7i3Zre9og",
+      "blockHash": "FJymgiomqJwcGxpVF5TKuLG1qqiJZHarbkpj7SQpKU5f",
+      "gasBurnt": "2048490824646",
+      "events": [
+        "treasury_funded"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdgnrtz5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "CDquTrKfXUHQHiLbsEKLwB4Y69K7sxLBcPcKEv9EiwWz",
+      "blockHash": "A5G2XbezwohZMkt5CfChUPy2Kectujj22Mxf39ZmvGYE",
+      "gasBurnt": "3225544317489",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "poolmwdgo6na7.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "AwaP6qY5Sa2CUvKWxpzAbm6SeUEDMpWNpuWaJvT8zXzM",
+      "blockHash": "9g9XdXLnAA1bYJ7KiYfCRJK9hAR5xToXwezVKcjgy4VM",
+      "gasBurnt": "2350940705642",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "poolmwdgo6na7.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "CSjnGoyFVkFhkMX9VFv5J6Cxt7j9TSp3wnMZCB7i8hxw",
+      "blockHash": "9g9XdXLnAA1bYJ7KiYfCRJK9hAR5xToXwezVKcjgy4VM",
+      "gasBurnt": "3634006829956",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "poolmwdgo6na7.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "Cb5CTiXT5zxonae8XfF47apPH1tTAFccpxSsHGs3GKsN",
+      "blockHash": "9g9XdXLnAA1bYJ7KiYfCRJK9hAR5xToXwezVKcjgy4VM",
+      "gasBurnt": "3720092263057",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "poolmwdgo6na7.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "7186f5pW2PpjvPRaSeD2s349JwYJks9RwhcYsJUg2gYf",
+      "blockHash": "4k1MoaBUrEFS5ZMVACeEhmBr1VsGsUnHsVSL7Ai7EX6i",
+      "gasBurnt": "5629501993561",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "poolmwdgo6na7.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "J6sAVo4DNxiYEUkYrpgDfsBg5fdRt9PNALRmoVLd1dky",
+      "blockHash": "4k1MoaBUrEFS5ZMVACeEhmBr1VsGsUnHsVSL7Ai7EX6i",
+      "gasBurnt": "5757687451677",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    }
+  ]
+}

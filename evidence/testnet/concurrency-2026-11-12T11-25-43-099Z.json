@@ -1,0 +1,687 @@
+{
+  "scenario": "concurrency",
+  "network": "external",
+  "contract": "circuitmwdgosbr12.circuit-demo.testnet",
+  "started_at": "2026-11-12T11:25:43.099Z",
+  "finished_at": "2026-11-12T11:27:08.111Z",
+  "passed": true,
+  "checks": [
+    {
+      "name": "requests over-subscribe the treasury",
+      "pass": true,
+      "detail": "1.381500 NEAR requested vs 1.000000 NEAR budget"
+    },
+    {
+      "name": "accepted ≤ treasury budget",
+      "pass": true,
+      "detail": "0.572800 NEAR"
+    },
+    {
+      "name": "accepted ≤ branch vendor cap",
+      "pass": true,
+      "detail": "0.572800 NEAR ≤ 0.600000 NEAR"
+    },
+    {
+      "name": "contract state matches observed outcomes",
+      "pass": true,
+      "detail": "reserved 0.572800 NEAR, exposure 0.572800 NEAR"
+    },
+    {
+      "name": "every agent within its own allocation",
+      "pass": true,
+      "detail": "10 agents checked"
+    },
+    {
+      "name": "invariants (after concurrent reservations)",
+      "pass": true,
+      "detail": "I1–I5, I8 hold over 11 agents"
+    },
+    {
+      "name": "all accepted payouts settle",
+      "pass": true,
+      "detail": "11/11"
+    },
+    {
+      "name": "vendor received exactly the accepted total",
+      "pass": true,
+      "detail": "0.572800 NEAR"
+    },
+    {
+      "name": "invariants (after concurrent payouts)",
+      "pass": true,
+      "detail": "I1–I5, I8 hold over 11 agents"
+    }
+  ],
+  "metrics": {
+    "experiment": {
+      "seed": "0x5eed",
+      "agents": 10,
+      "requests": 24,
+      "keys_per_agent": 3,
+      "budget": "1.000000 NEAR",
+      "child_allocation": "0.100000 NEAR",
+      "branch_vendor_cap": "0.600000 NEAR",
+      "total_requested": "1.381500 NEAR",
+      "total_accepted": "0.572800 NEAR",
+      "total_rejected": "0.808700 NEAR",
+      "accepted_count": 11,
+      "rejected_count": 13,
+      "rejections_by_code": {
+        "INSUFFICIENT_BUDGET": 5,
+        "COUNTERPARTY_LIMIT": 8
+      },
+      "treasury_remaining_after_payouts": "0.427200 NEAR",
+      "distinct_inclusion_blocks": 3,
+      "submission_wall_clock_ms": 5203,
+      "reserve_latency_to_final_ms": {
+        "count": 24,
+        "min": 3846,
+        "p50": 4452,
+        "p95": 5203,
+        "max": 5203
+      },
+      "execute_latency_to_final_ms": {
+        "count": 11,
+        "min": 5344,
+        "p50": 5371,
+        "p95": 5706,
+        "max": 5706
+      },
+      "reserve_gas_tgas_accepted": {
+        "count": 11,
+        "min": 3.913,
+        "p50": 3.995,
+        "p95": 4.106,
+        "max": 4.106
+      },
+      "reserve_gas_tgas_rejected": {
+        "count": 13,
+        "min": 2.571,
+        "p50": 2.584,
+        "p95": 2.595,
+        "max": 2.595
+      },
+      "execute_gas_tgas": {
+        "count": 11,
+        "min": 5.758,
+        "p50": 5.808,
+        "p95": 5.908,
+        "max": 5.908
+      }
+    }
+  },
+  "transactions": [
+    {
+      "step": "setup",
+      "actor": "circuitmwdgosbr12.circuit-demo.testnet",
+      "method": "new",
+      "ok": true,
+      "txHash": "FpaTiG8EQHDyWHcZt9GrWwZJHdAEBWunG7R1J38XkkD8",
+      "blockHash": "EeWWV5WRqQwjwUJqWkiw2HpkRNZQw46pbA6A7uvi1oK3",
+      "gasBurnt": "1870026694789",
+      "events": []
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdgop5x11.circuit-demo.testnet",
+      "method": "fund_treasury",
+      "ok": true,
+      "txHash": "9fAjQj3vN3NnmMVYsdC2tjatDFN4Fno28UvJL2MSJdpU",
+      "blockHash": "HutGa6Cyazsw589Evmju7sLeGo44vSuoxsL75RZTmo9w",
+      "gasBurnt": "2054273024375",
+      "events": [
+        "treasury_funded"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdgop5x11.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "6ZXx6ox6ATCPzbD3kbJoZz5FRvpLgdnof8YHwDgSxHHf",
+      "blockHash": "E5ZN1sz8mKP7xxBGuvUCQxFDCvP3xtZpURQ55o2bxsfR",
+      "gasBurnt": "3240636629840",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "nX6T56FYr317bu7fNjQU2FUwDAec6Yjan3FmFtZ8dXH",
+      "blockHash": "32Q2JxGxzynCVbecGEyYh2bXmaqEeMC3i7eZJ451XmSw",
+      "gasBurnt": "3515019432099",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "CcmXD6L8g74iyn3hmXZcWbeGMbbC8yNhVjswAmKehTaz",
+      "blockHash": "33koFWcnTXDNjY67PVQh6MrE6o39aKcuSin9YNAPoYfz",
+      "gasBurnt": "3516660150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "HTErUXyEqsTd7G6na2FGgRBk8BPBnfiGRVkztgjiUMaV",
+      "blockHash": "GLvv3DdF7jW8Jvb88h1vFRxM3fWPkdYPr2CQWRjcA9gb",
+      "gasBurnt": "3518940150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "4XN3aJh2Yhc3hT54SMAr2CdejvCtmksxfVEEvA8miaaS",
+      "blockHash": "EauDuvq5wHpfL7DoTLkukQbrQJuUufzrjvQv6FAZmjtY",
+      "gasBurnt": "3518940150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "J2xu1FYcMfKshofFQBnmoradXdaJguPuHXMv7BitC5at",
+      "blockHash": "CqrQo7cTQNTBPPS6ZHatFHCNhTibEcv3VdG4vyM6TZDE",
+      "gasBurnt": "3518940150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "2c8yxMnMo9F7ZjVYg1KkfsNbThkMy8QNHWeZVNhcB8w9",
+      "blockHash": "EfUjSnkJxJENapAzN6QP5beR4WU293oZcYoVY3teiDw",
+      "gasBurnt": "3518940150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "DMjJjkduAHanddx3VCVn1U6LJgRBwxXrdoP3kVio9cru",
+      "blockHash": "F58Tnq4ZJRq8yaa8AsAsSowgjGjjT7juMWCacXfczfEE",
+      "gasBurnt": "3521220150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "Hfmi9FU9Ex8EjMqWHd9QrNiMG8Qyzm6GywkbmtfB8RuU",
+      "blockHash": "BYrG2uvt6dgfiUkXPzb4CywkKz6Rp2pJkjx7VcbqG6r4",
+      "gasBurnt": "3523500150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "GRs4qUP1BWpKRCcEbiQeJWz4RMdPSJMUrcpuAy1374KZ",
+      "blockHash": "8U2oGoNSEzaSxNtgPwbGJ7DQYJFR4waziGUiwW64ZELQ",
+      "gasBurnt": "3521220150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdgp3sd13.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "FSg8eQT3sz7FiDiEw5bNRUgqdgfr5BVBhJca2sgQhqMb",
+      "blockHash": "A2QHmLKTofc1LHH7mGQXdLcB3gv6tcVSRSo5vQYzavqn",
+      "gasBurnt": "3523500150687",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn323.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "5fpuWfbjnk8yKf4bUC1vz3N8cnMUc3gMHiX3hPvYLhUK",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "2571221171819",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmp17.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "2mCuqDzFruPu6aZ816SEVu5nAdRfKp6sYhJwy8LfNLgr",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "2571399740450",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmo16.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "wFhsHra96riBDuZ2MRQgUA8vc2y9xFtBuJdHS7B6P4Z",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3913595999617",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmy21.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "AGEMeoZmtsPE9XrGmQPFLC3jWQdCRVA4ReX9LBcGiDNT",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595566865455",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdml15.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "ttdcTsCmAn2BqCu7D9ECaZNQJMV5U3sxKd1XjjBm4iL",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2571399740450",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmu19.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "3CH97JzeuQdHFcXB4iVc4c73fEdv8igWokKjnfpak7Vs",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595653285414",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdml15.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "D9pro68CykoY9oeZ6TQLqzrqxbAq5Wn6rmHaLPhVCdrN",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595566865455",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmr18.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "Duv9ifZDWBp2LpumcKquW3Pt8c6pwYnVjputAJvg1kVP",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595745434086",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn524.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "G7fdUe5c1fX9nqZftQBRfA8R6D65zm1hmnKPCtvSfnUj",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2584202452632",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmr18.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "DqUc7n7ePp1cs5gzaiBJfrv6apY2XTXyBtuGuEJ9oNTf",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2571399740450",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmy21.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "2jKGgA5NmggzjNxViiRYtn7cUodVF8oe9DScnhxDuQVu",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3995184091091",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmo16.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "HcVSjho3vrgCV2nhy6USZg1fkXQF69fogHLzqik8aRGj",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "4073849580774",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmx20.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "ETS3dQ8vSmkzyErLG3CMGNJkHRM6pLi33wrAadHsrVFe",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3994567817492",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdml15.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "9j3dTh5ZPn1GPgVVZNaC7Yw5a3p8Z4VyPrkG654Zm5xt",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3995184091091",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn323.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "72ibgiT1YHvgPEA9cMH3k6yzPg6kvH5RXvCLsQfz4kLG",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3992896686287",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn122.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "CRzLoeMCEP95aLzqWHLiQ4LeBKwPxHm3CMSWq61UDx8i",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595566865455",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmo16.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "DCcstEfrHKVfguZaRMrSduYE93X8A7pk4yoz1oGrEuBw",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2595653285414",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmp17.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "FrGZ3qctd92tkVZXUtzFy3wc2uqYKk8qWWMLv1U8rgFf",
+      "blockHash": "ApSfAqj1Hi7uyyRsCcYPzkvMEua4rUzdwaakWv68K5q4",
+      "gasBurnt": "3994567817492",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmx20.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "5nFpQTB6SVG6TwTubB7bABx8jrNCN4BBq4Mofw9wcpjs",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "2571399740450",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn122.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "7UyEcr2wCyEw41jHsNRUUQ4xoArAqPhRixVe1KAX894h",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "4106904091091",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmu19.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "2h7WQ9o87QmLTKFdfmeb44Rr48YB9hiTUib8SsQaWYXb",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "4004022413840",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmp17.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "7SvjkwxT8oUpLzKQsCtAuPmv9FXp4qoPSSzSdP5a7CGo",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "4023744421888",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdn524.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "GdpZttBxZsBjB9BRwPoxtdMMzQ2FLfGXQ4Zq3WZaWKrP",
+      "blockHash": "GhWXumwBn1SxZCWTrpeQsKwA9gRFfTrwoWGQARi9BfCy",
+      "gasBurnt": "2584381021263",
+      "events": []
+    },
+    {
+      "step": "reserve",
+      "actor": "agentmwdgpdmr18.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "2cfiAgzxvKDDrSvzYbCYs2HYufWBh3RSZpKy6sHSaQ1U",
+      "blockHash": "FaDp8yVmDebFaghqcVZgY2Q2RjGzCyeHmb5iisE8GEnX",
+      "gasBurnt": "4003687817492",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmo16.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "4rsD3iqtbecZJdWNG8Z7tWY91i6K4VdxLWXCeCXs3BJF",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5806266289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmu19.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "DauKTeJ96EyiczbFQzNP2BJXyouCkL4q8mTdowjeEtcz",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5807071773977",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmx20.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "6JGxLVUxqBZafefFvfPf3ZKXXA7Zea8e8fW9F2yzVgfn",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5808349077657",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdml15.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "G1FdrcMQCvQbw9DKAmeQtYYiXJ3Cd8XpXwXuVhZgqewc",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5908866289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmr18.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "A9YX2iQaqiopk5wVinq5WCfKgesqwtDdoJsKedxhDoAP",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5808349077657",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdn122.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "Gc1FG7WHfHTtQG1GAW1cAtLaa4TZRqz4JCFqmo2h117m",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5808546289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmp17.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "7C9qk5qdGEF2vGmxsU1X3vJTB1xzNp1FtiaGab9Jyf68",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5808546289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdn323.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "GKFm2Q9er8pE1Fhem6Y5BqFtGXSHnumtVdnoKTx9v9VU",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5806266289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmo16.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "B3Lj8zhG8W3zBHTY621ezBuReX23J6MpTnt6UQLmPgUB",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5758189077657",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmy21.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "2Pwjj1giRksHEfFnna1NZ5JqNP1Gp5zfKNV1Bf9aAU4B",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5808546289675",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    },
+    {
+      "step": "execute",
+      "actor": "agentmwdgpdmp17.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "2P5zLHAthYjT2NacntQ6ujaBx6Ay16RdsupdaTLAcJVH",
+      "blockHash": "EGbVbMmUnxuy1jCgs9AgSUNGWtxikqZNwsPMhvTr3qFQ",
+      "gasBurnt": "5758189077657",
+      "events": [
+        "execution_started",
+        "reservation_settled"
+      ]
+    }
+  ]
+}

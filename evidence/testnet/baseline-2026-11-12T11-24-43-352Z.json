@@ -1,0 +1,55 @@
+{
+  "scenario": "baseline",
+  "network": "external",
+  "contract": "hotwalletmwdgni7f1.circuit-demo.testnet",
+  "started_at": "2026-11-12T11:24:43.352Z",
+  "finished_at": "2026-11-12T11:24:48.165Z",
+  "passed": true,
+  "checks": [
+    {
+      "name": "[baseline, expected to overspend] total paid exceeds the budget",
+      "pass": true,
+      "detail": "paid 0.140000 NEAR against a 0.100000 NEAR budget (+0.040000 NEAR)"
+    }
+  ],
+  "metrics": {
+    "baseline": {
+      "budget": "0.100000 NEAR",
+      "requested": "0.140000 NEAR",
+      "paid": "0.140000 NEAR",
+      "overspend": "0.040000 NEAR"
+    }
+  },
+  "transactions": [
+    {
+      "step": "pay",
+      "actor": "agent-0",
+      "method": "transfer",
+      "ok": true,
+      "txHash": "5MAzZMXyAtiG9YKFZ4zPb1PYqWDTwcQHT8rbR6taU57h",
+      "blockHash": "6RjTGnzYcSGm2CqHir74R8HuqruxbHPSMswysqHbYMEg",
+      "gasBurnt": "669547687500",
+      "events": []
+    },
+    {
+      "step": "pay",
+      "actor": "agent-1",
+      "method": "transfer",
+      "ok": true,
+      "txHash": "3vQUkoNxc1Ze1CYmg3Vj6ofdE5PoHsdR3vtPg3wsgjK2",
+      "blockHash": "6RjTGnzYcSGm2CqHir74R8HuqruxbHPSMswysqHbYMEg",
+      "gasBurnt": "669547687500",
+      "events": []
+    },
+    {
+      "step": "pay",
+      "actor": "agent-2",
+      "method": "transfer",
+      "ok": true,
+      "txHash": "2BYYrfoST3Q6ncu3XduYGWdGodyE2C6zwSFzP2G9ygHS",
+      "blockHash": "AKpc1dH2qVw1GC7Tzwq4xUvQtp6qVcm6mdmAfwy9kD2A",
+      "gasBurnt": "669547687500",
+      "events": []
+    }
+  ]
+}
