@@ -1,7 +1,7 @@
 # Demo script (about 3 minutes)
 
 Before recording:
-- Open the dashboard on the concurrency contract: `?contract=<id>&network=testnet`.
+- Open the console on the concurrency contract: `/console/?contract=<id>&network=testnet`.
 - Load the four testnet reports into the Evidence tab, or open the Pages URL, which bundles them.
 - Keep a terminal in `packages/agent-simulator` with the testnet environment variables set.
 - Keep the README and `evidence/testnet/` open in the GitHub repo.

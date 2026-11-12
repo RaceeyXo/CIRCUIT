@@ -88,7 +88,7 @@ testnet run has been made.
 | `tests/sandbox` | Real-transaction integration, adversarial and concurrency tests (near-workspaces) |
 | `packages/shared` | Contract types, exact bigint NEAR units, RPC outcome parser, typed client |
 | `packages/agent-simulator` | `circuit-sim`: baseline, spec, concurrency and attack scenarios with JSON evidence reports |
-| `apps/web` | Read-only dashboard: treasury, agent hierarchy, reservations, evidence viewer |
+| `apps/web` | Next.js site: landing page + read-only console (treasury, agent hierarchy, reservations, evidence viewer) |
 | `docs/` | Architecture, threat model, benchmarks |
 
 ## Running it
@@ -115,7 +115,7 @@ CIRCUIT_RPC_URL=https://test.rpc.fastnear.com CIRCUIT_FUNDER_ID=you.testnet CIRC
   node dist/cli.js all --network external --scale 0.1 --wasm ../../target/near/circuit/circuit.wasm
 
 # Dashboard
-cd apps/web && pnpm dev    # then open /?contract=<contract account>&network=testnet
+cd apps/web && pnpm dev    # Next.js on :3001 → /console/?contract=<contract account>&network=testnet
 ```
 
 ## Limits (honest scope)

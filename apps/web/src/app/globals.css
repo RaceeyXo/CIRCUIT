@@ -24,8 +24,6 @@
   --color-idle: #3b403d;
   --color-free: #1d1d1d;
 
-  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --radius-card: 20px;
   --radius-band: 28px;
@@ -36,6 +34,12 @@
   @keyframes float { 50% { transform: translateY(-8px); } }
   @keyframes pulse-dot { 50% { opacity: 0.35; } }
   @keyframes marquee { to { transform: translateX(-50%); } }
+}
+
+/* Fonts come from next/font (self-hosted at build time) via CSS variables set on <html>. */
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 @layer base {

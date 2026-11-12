@@ -1,6 +1,6 @@
 name: dashboard
 
-# Builds the read-only dashboard and publishes it to GitHub Pages.
+# Builds the site (landing page + read-only console, Next.js static export) and publishes it to GitHub Pages.
 # Manual only: Actions → dashboard → Run workflow. Requires Pages source = "GitHub Actions".
 # Set repository variables CIRCUIT_CONTRACT_ID (and optionally CIRCUIT_NETWORK) to choose the default contract.
 
@@ -28,20 +28,21 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile && pnpm --filter @circuit/shared build
-      - name: Build dashboard
+      - name: Build site (Next.js static export)
         working-directory: apps/web
         env:
-          VITE_NETWORK: ${{ vars.CIRCUIT_NETWORK || 'testnet' }}
-          VITE_CONTRACT_ID: ${{ vars.CIRCUIT_CONTRACT_ID }}
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_NETWORK: ${{ vars.CIRCUIT_NETWORK || 'testnet' }}
+          NEXT_PUBLIC_CONTRACT_ID: ${{ vars.CIRCUIT_CONTRACT_ID }}
         run: |
           mkdir -p public/evidence
           if ls ../../evidence/testnet/*.json >/dev/null 2>&1; then
             cp ../../evidence/testnet/*.json public/evidence/
-            export VITE_REPORTS=$(cd public && ls evidence/*.json | paste -sd, -)
+            export NEXT_PUBLIC_REPORTS=$(cd public && ls evidence/*.json | paste -sd, -)
           fi
           pnpm build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/web/dist
+          path: apps/web/out
       - id: deployment
         uses: actions/deploy-pages@v4

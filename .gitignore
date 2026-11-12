@@ -9,3 +9,4 @@ neardev/
 .near-credentials/
 node_modules/
 dist/
+apps/web/public/evidence/

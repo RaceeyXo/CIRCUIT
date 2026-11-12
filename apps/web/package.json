@@ -4,17 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "node -e \"process.exit(0)\""
   },
   "dependencies": {
-    "@circuit/shared": "workspace:*"
+    "@circuit/shared": "workspace:*",
+    "next": "16.4.3",
+    "react": "19.2.9",
+    "react-dom": "19.2.9"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "4.3.3",
-    "tailwindcss": "4.3.3",
-    "vite": "7.3.7"
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "tailwindcss": "4.3.3"
   }
 }
