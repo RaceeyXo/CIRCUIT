@@ -30,6 +30,13 @@ const N = (near: string) => (parseNear(near) * scalePpm) / 1_000_000n;
  * 0.1 NEAR for `execute` (100 Tgas). Unused gas is refunded afterwards, but must be available first.
  */
 const signerMoney = (lanes = 1) => parseNear("0.1") + BigInt(lanes) * parseNear("0.1");
+
+/**
+ * Leaner, per-role balances for the attack scenario (it creates the most accounts). Each in-flight
+ * call locks ~0.05 NEAR (0.02 deposit + ~0.03 prepaid gas); `execute` locks ~0.05 (50 Tgas).
+ * Sequential signers therefore need ~0.1; the 5-key leaf sends 5 reserves at once.
+ */
+const ATTACK_MONEY = { sequential: parseNear("0.1"), oneShot: parseNear("0.08"), leaf: parseNear("0.3") };
 /** Balance for accounts that only receive payments and never sign. */
 const PASSIVE_MONEY = parseNear("0.01");
 const HOUR = 3_600n * SEC;
@@ -58,7 +65,7 @@ export function policy(p: Partial<Record<keyof PolicyJson, bigint | number>> = {
 export async function setup(net: Network, wasm: string, scenario: string, budget: bigint): Promise<Ctx> {
   const owner = await createActor(net, "owner", budget + signerMoney());
   // Covers storage staking for the ~230 KB wasm plus state; not part of the treasury.
-  const contract = await deployContract(net, wasm, parseNear("3"));
+  const contract = await deployContract(net, wasm, parseNear("2.5"));
   const client = new CircuitClient(net.rpcUrl, contract.id);
   const ev = new Evidence(scenario, net.kind, contract.id);
   must(ev.record("setup", contract.id, "new", await client.init(contract.signer(), owner.id)));
@@ -289,12 +296,12 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   const ctx = await setup(net, wasm, "attacks", budget);
   const { client, ev, owner } = ctx;
   const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
-  const stranger = await createActor(net, "stranger", signerMoney());
+  const stranger = await createActor(net, "stranger", ATTACK_MONEY.sequential);
 
   // Hierarchy: root → mid → leaf, plus root → 4 splitter children.
-  const root = await createActor(net, "root", signerMoney());
-  const mid = await createActor(net, "mid", signerMoney());
-  const leaf = await createActor(net, "leaf", signerMoney(5), 5);
+  const root = await createActor(net, "root", ATTACK_MONEY.sequential);
+  const mid = await createActor(net, "mid", ATTACK_MONEY.sequential);
+  const leaf = await createActor(net, "leaf", ATTACK_MONEY.leaf, 5);
   must(await register(ctx, owner, root, null, policy({ max_counterparty_exposure: N("0.3") }), N("8")));
   must(await register(ctx, root, mid, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: N("1") }), N("2")));
   must(await register(ctx, mid, leaf, mid, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("1")));
@@ -327,7 +334,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("C. reservation untouched by forgeries", still!.status === "Reserved", still!.status);
 
   // D. Counterparty splitting: root's 0.3 NEAR cap on one sink binds all its children.
-  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", signerMoney())));
+  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", ATTACK_MONEY.oneShot)));
   for (const s of splitters) must(await register(ctx, root, s, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("0.2")));
   const sink = await createActor(net, "sink", PASSIVE_MONEY);
   const split = await reserveAll(ctx, "splitting", splitters.map((s, i) => ({ agent: s, requestId: `split-${i}`, counterparty: sink.id, amount: N("0.15") })));
@@ -347,7 +354,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("E. healthy ancestor can release the frozen reservation", rel.ok && rel.value?.release_reason === "Ancestor", rel.ok ? rel.value!.release_reason ?? "" : rel.rejection?.code ?? "");
 
   // F. Hoarding: reserve the whole budget with a short TTL; it expires and anyone can free it.
-  const hoarder = await createActor(net, "hoard", signerMoney());
+  const hoarder = await createActor(net, "hoard", ATTACK_MONEY.sequential);
   must(await register(ctx, owner, hoarder, null, policy(), N("0.5")));
   const h = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "hoard", vendor.id, N("0.5"), 3n * SEC));
   const blocked = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "next", vendor.id, 1n, HOUR));

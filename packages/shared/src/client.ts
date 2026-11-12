@@ -12,7 +12,8 @@ import { TGAS } from "./units.js";
 // ~4x the largest measured per-call storage cost (~0.005 NEAR); the contract refunds the excess.
 export const STORAGE_DEPOSIT = 20_000_000_000_000_000_000_000n; // 0.02 NEAR
 export const DEFAULT_GAS = 30n * TGAS;
-export const EXECUTE_GAS = 100n * TGAS;
+// Measured burn is ~5.8 Tgas (transfer + callback); the contract requires >= 40 Tgas attached.
+export const EXECUTE_GAS = 50n * TGAS;
 
 export class CircuitClient {
   readonly provider: JsonRpcProvider;
