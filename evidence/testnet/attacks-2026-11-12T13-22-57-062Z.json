@@ -1,0 +1,537 @@
+{
+  "scenario": "attacks",
+  "network": "external",
+  "contract": "circuitmwdkvj042.circuit-demo.testnet",
+  "started_at": "2026-11-12T13:22:57.062Z",
+  "finished_at": "2026-11-12T13:25:38.830Z",
+  "passed": true,
+  "checks": [
+    {
+      "name": "A. delegation beyond available budget rejected",
+      "pass": true,
+      "detail": "INSUFFICIENT_BUDGET"
+    },
+    {
+      "name": "A. child policy looser than parent rejected",
+      "pass": true,
+      "detail": "POLICY_EXCEEDS_PARENT"
+    },
+    {
+      "name": "A. agent cannot top up its own budget",
+      "pass": true,
+      "detail": "UNAUTHORIZED"
+    },
+    {
+      "name": "B. 5 concurrent duplicates → exactly one reservation",
+      "pass": true,
+      "detail": "ids 0, new 1, reserved 0.003000 NEAR"
+    },
+    {
+      "name": "B. reused request id with different amount rejected",
+      "pass": true,
+      "detail": "REQUEST_ID_CONFLICT"
+    },
+    {
+      "name": "C. forged on_execute by agent rejected",
+      "pass": true,
+      "detail": "method is private"
+    },
+    {
+      "name": "C. forged on_execute by owner rejected",
+      "pass": true,
+      "detail": "method is private"
+    },
+    {
+      "name": "C. forged on_execute by outsider rejected",
+      "pass": true,
+      "detail": "method is private"
+    },
+    {
+      "name": "C. reservation untouched by forgeries",
+      "pass": true,
+      "detail": "Reserved"
+    },
+    {
+      "name": "D. splitting across 4 children capped at the branch limit",
+      "pass": true,
+      "detail": "accepted 0.009000 NEAR, codes {\"COUNTERPARTY_LIMIT\":2}"
+    },
+    {
+      "name": "E. descendant of revoked agent cannot reserve",
+      "pass": true,
+      "detail": "ANCESTOR_REVOKED"
+    },
+    {
+      "name": "E. descendant of revoked agent cannot execute",
+      "pass": true,
+      "detail": "ANCESTOR_REVOKED"
+    },
+    {
+      "name": "E. revoked agent cannot reserve",
+      "pass": true,
+      "detail": "AGENT_REVOKED"
+    },
+    {
+      "name": "E. healthy ancestor can release the frozen reservation",
+      "pass": true,
+      "detail": "Ancestor"
+    },
+    {
+      "name": "F. budget locked while reservation is live",
+      "pass": true,
+      "detail": "INSUFFICIENT_BUDGET"
+    },
+    {
+      "name": "F. expired reservation cannot be paid out",
+      "pass": true,
+      "detail": "RESERVATION_EXPIRED"
+    },
+    {
+      "name": "F. anyone can release an expired reservation",
+      "pass": true,
+      "detail": "[\"3\"]"
+    },
+    {
+      "name": "G. failed transfer returns reservation to Reserved",
+      "pass": true,
+      "detail": "settled=false, status Reserved, attempts 1"
+    },
+    {
+      "name": "invariants (after all attacks)",
+      "pass": true,
+      "detail": "I1–I5, I8 hold over 8 agents"
+    }
+  ],
+  "metrics": {},
+  "transactions": [
+    {
+      "step": "setup",
+      "actor": "circuitmwdkvj042.circuit-demo.testnet",
+      "method": "new",
+      "ok": true,
+      "txHash": "GaUJBby924jZvdw2oM56EKehUKazQ7RyGUi6g6zPiN5Q",
+      "blockHash": "DmMJczmk7Bygj87i19RWTpxWRcaKDtfueof1r2h3sz18",
+      "gasBurnt": "1872189709919",
+      "events": []
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdkvgfn1.circuit-demo.testnet",
+      "method": "fund_treasury",
+      "ok": true,
+      "txHash": "85wsH6JyZzBp2vL9YcJ9Vw1ngfbh7Ez3JUeGRowmwo6R",
+      "blockHash": "DAdaSD8SGDcWJ982sPa9G5BHckxnrGarNS4jVzx49BL7",
+      "gasBurnt": "2053050824646",
+      "events": [
+        "treasury_funded"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdkvgfn1.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "6LGHwQpT4Nk3WmsUXzkQNKpZG2D4X3xAuwRs48JQh6xa",
+      "blockHash": "CLVbi3sQV9iBNBUPBVecSR7XcZF6pqfWpyNVwRET97Jd",
+      "gasBurnt": "3238286913981",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "32Sn3Utjhn1ix5Mvf4zN3k7rgmbQhNjbocPPtEiFSaYN",
+      "blockHash": "HKeLgGSNYo5PtUa33MeuYTTSvmwgB39FAZDP4jFQqyPo",
+      "gasBurnt": "3514420993819",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "midmwdkw3zy6.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "A5N1EBnpC3RjXzDQqwZ8K76JbzGa2ZZcNUuWP5bXU3XT",
+      "blockHash": "95trK848rKtmWCRRoxH52fCDxM8AKJNbbR1VLDp6FHsn",
+      "gasBurnt": "3618643400937",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "escalation",
+      "actor": "midmwdkw3zy6.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "2vwUCAhMm72rNqEEoEuxNHfCjZ8Q3aP6Pmc7NAY3hEPE",
+      "blockHash": "2WfQRkV7QjFWK16DUY9p3LYUiamhkdfdAtFkoFCJisFL",
+      "gasBurnt": "2397281219256",
+      "events": []
+    },
+    {
+      "step": "escalation",
+      "actor": "midmwdkw3zy6.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": false,
+      "code": "POLICY_EXCEEDS_PARENT",
+      "txHash": "EHcdinBmMaoEmnuXGoMSW1zNnTZ2jasm5XXpZ4Z7P3ZV",
+      "blockHash": "hHvzJB4C5pYc9rQahbxY4Hg8h3L6RVwBXwsQazUyUcY",
+      "gasBurnt": "2392080551688",
+      "events": []
+    },
+    {
+      "step": "escalation",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "delegate_budget",
+      "ok": false,
+      "code": "UNAUTHORIZED",
+      "txHash": "35X3nfTyPo618ki3ixuUgNm6ReaH65uW8QFaGzWAyDk5",
+      "blockHash": "CJ7suYeLVbaD5yCYGsPXRKDgn7HnAt1aY1kSrMmdnjjV",
+      "gasBurnt": "1918687405803",
+      "events": []
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "Cab1K15ahHKjaBVxMrwLyAg7DQywLUoapn4VPTWMViAJ",
+      "blockHash": "EWZJGDJg87WZEJSA8KvWrvH22fp2Z3woTm92u9841BxG",
+      "gasBurnt": "4384825464493",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "Bi5dcMjZTpvQAKFyMvfGpFL4YxkgqGjnnU2vtj2a6Rtp",
+      "blockHash": "EWZJGDJg87WZEJSA8KvWrvH22fp2Z3woTm92u9841BxG",
+      "gasBurnt": "3021733791060",
+      "events": [
+        "reservation_duplicate"
+      ]
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "42Qsi1eHfnDMDrjuKQqLTELwcbTYvk9XgNiqA6qMazGt",
+      "blockHash": "EWZJGDJg87WZEJSA8KvWrvH22fp2Z3woTm92u9841BxG",
+      "gasBurnt": "3021733791060",
+      "events": [
+        "reservation_duplicate"
+      ]
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "51Hzmmnqzs2fZWHoZJjvWc2QBruQDCTZJQaF2J9nCmUE",
+      "blockHash": "EWZJGDJg87WZEJSA8KvWrvH22fp2Z3woTm92u9841BxG",
+      "gasBurnt": "3021733791060",
+      "events": [
+        "reservation_duplicate"
+      ]
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "39QNCRdBhC7SJYjnTrZCn9NeKVPc3BpqX25twbZCb1Xi",
+      "blockHash": "EWZJGDJg87WZEJSA8KvWrvH22fp2Z3woTm92u9841BxG",
+      "gasBurnt": "3021733791060",
+      "events": [
+        "reservation_duplicate"
+      ]
+    },
+    {
+      "step": "duplicates",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "REQUEST_ID_CONFLICT",
+      "txHash": "2CSog8HGHGEzPCNqVrK8CwWY8pBPrLR2UidnPQcnVAyP",
+      "blockHash": "6teCpfjxPhTbeDX3HKRdMrqYBx659kJWq8dYg4LkVvY8",
+      "gasBurnt": "2332698042525",
+      "events": []
+    },
+    {
+      "step": "forged-callback",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "on_execute",
+      "ok": false,
+      "error": "{\"ActionError\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Method on_execute is private\"}}}}",
+      "txHash": "E3Eq3raSmUxYXAjd4QUMPjGNzLvChf9jfKFNd47CyAG8",
+      "blockHash": "FzWQvcm3adRg6i3tuXVNEGPkYGB9WB8wucBTC6G9DYUk",
+      "gasBurnt": "1710465481840",
+      "events": []
+    },
+    {
+      "step": "forged-callback",
+      "actor": "ownermwdkvgfn1.circuit-demo.testnet",
+      "method": "on_execute",
+      "ok": false,
+      "error": "{\"ActionError\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Method on_execute is private\"}}}}",
+      "txHash": "Ei8dHL735xxdspz72Q7Y2Y7xdhDveakZk9rLQPu98QFK",
+      "blockHash": "H1eyLaCKRKaDQSwMrscvUTsdiPNoTKYxozUaN8CpNBzp",
+      "gasBurnt": "1710523116610",
+      "events": []
+    },
+    {
+      "step": "forged-callback",
+      "actor": "strangermwdkvy5g4.circuit-demo.testnet",
+      "method": "on_execute",
+      "ok": false,
+      "error": "{\"ActionError\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Method on_execute is private\"}}}}",
+      "txHash": "AiceMRPyFdF6ybZw14EnbWqHBaUqgs7Y4aFt9DixLxEC",
+      "blockHash": "2HJ9zYqRC9ZcseNtRRQkPi6qNSWfbBJecGSTtuV1LvSD",
+      "gasBurnt": "1710696020920",
+      "events": []
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "Ht2zkHWRCAxprPqytNmtsmkSkCmr62K3g1gnJpURXM2P",
+      "blockHash": "HoVZrnHnw5TBP1xPsKd9ZgyfuszAYkVuG8kscJz9Bqq5",
+      "gasBurnt": "3517658750317",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "DGH8BtUwvock6EMmuKa4mYyWeToNdikyjFzr7KAYJhwb",
+      "blockHash": "AaiTWB8iajSjk3SaDMY9HPrXjXqwt4GLxBGGtAKbC6Ag",
+      "gasBurnt": "3515807435548",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "EW1EbhNCnPNqGyhUf4p4ah9kcmHv1LA2T1ihLFeyQ95o",
+      "blockHash": "6GSjrC5XWZfKsJny8Lm8Hng9WsnNvwdhWznuQcPTS7Y6",
+      "gasBurnt": "3515807435548",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "6thoSmtwJBzM7CYEodn55qsfkcfgtGcTztqNGV8xepRW",
+      "blockHash": "CJZ82dZALPjzAyTpdBhMxNn9rRcPifV1E6CgX22oxGEU",
+      "gasBurnt": "3515807435548",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "splitting",
+      "actor": "splitmwdkxa7x10.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "2e5YfwQQQ1emts6ncviNDMReotGVrVUa3FmtyVK4JQXk",
+      "blockHash": "EwCf8bzEeb5faDBJKgYxzybqubSRzGz1zbyM9HMfcmWk",
+      "gasBurnt": "2579986673657",
+      "events": []
+    },
+    {
+      "step": "splitting",
+      "actor": "splitmwdkxa7y12.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "COUNTERPARTY_LIMIT",
+      "txHash": "5vTSLugzdLjm5Y4cVfv4BSmihkppD9fhBn6CB5MJuUPj",
+      "blockHash": "EwCf8bzEeb5faDBJKgYxzybqubSRzGz1zbyM9HMfcmWk",
+      "gasBurnt": "2580078822329",
+      "events": []
+    },
+    {
+      "step": "splitting",
+      "actor": "splitmwdkxa7x11.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "3gimsFddTsA6ea5jjMLx5mtJ3w79bx65n1kWbJ2DJr7p",
+      "blockHash": "EwCf8bzEeb5faDBJKgYxzybqubSRzGz1zbyM9HMfcmWk",
+      "gasBurnt": "3993324527935",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "splitting",
+      "actor": "splitmwdkxa7w9.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "7zdughpvaHc7NGNvPrQZtiP34VDZCcAXmgziYbojv84L",
+      "blockHash": "EwCf8bzEeb5faDBJKgYxzybqubSRzGz1zbyM9HMfcmWk",
+      "gasBurnt": "4076436589316",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "revocation",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "revoke_agent",
+      "ok": true,
+      "txHash": "CDY6gwTgmSWghMu4xFBNybA7ts1J7eKNtvdeqrroV7KP",
+      "blockHash": "HQNL1Q3kGoAiBREpi7QEQL46tuaE8RtYmTRzdDjP931U",
+      "gasBurnt": "2460821521821",
+      "events": [
+        "agent_revoked"
+      ]
+    },
+    {
+      "step": "revocation",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "ANCESTOR_REVOKED",
+      "txHash": "8vxuGBZMGZsKj5BQCXm2jxtJ8rB1q7shBoLCatE9U7UZ",
+      "blockHash": "GYGvjonaaVx1Erw47BJJoua2AFcTDWpcGSHpfyprH3v9",
+      "gasBurnt": "2552164806283",
+      "events": []
+    },
+    {
+      "step": "revocation",
+      "actor": "leafmwdkw7857.circuit-demo.testnet",
+      "method": "execute",
+      "ok": false,
+      "code": "ANCESTOR_REVOKED",
+      "txHash": "Hk9uE5GN1af1FiGL4cY5Pk1pnnmBCYgSimC86hoKT9Z6",
+      "blockHash": "5ezgU2XJh2EpiWoiBBVw7uBD4S3aEcoAqwZ3duhTbkDN",
+      "gasBurnt": "2200485816052",
+      "events": []
+    },
+    {
+      "step": "revocation",
+      "actor": "midmwdkw3zy6.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "AGENT_REVOKED",
+      "txHash": "3LDkcbgiE2FbjTJtkAe4GqKehoAv7Piqg7ZPrfyZLppe",
+      "blockHash": "4P9PfuHCxdxLDijy219Qwg9JiuWp3mqcr6cPq2KYMNHR",
+      "gasBurnt": "2343858524883",
+      "events": []
+    },
+    {
+      "step": "revocation",
+      "actor": "rootmwdkw13o5.circuit-demo.testnet",
+      "method": "release",
+      "ok": true,
+      "txHash": "3nMhBtXcqyUdDM72ygLArujTduUiNyLqCZ8KAQZB4cVN",
+      "blockHash": "ExnGYaccjD2YoS7HhbwkfPnRqCpFkNaVaQ2Exofp3Ggt",
+      "gasBurnt": "3481341225244",
+      "events": [
+        "reservation_released"
+      ]
+    },
+    {
+      "step": "setup",
+      "actor": "ownermwdkvgfn1.circuit-demo.testnet",
+      "method": "register_agent",
+      "ok": true,
+      "txHash": "FGBHYuDGfpAdWFofQbcmJZQN97Su6Ao77uQscYw8xbLv",
+      "blockHash": "D8nLGAhcWP4MXiozkAMeaUPqXRPJn3bketVLEAwkYAhC",
+      "gasBurnt": "3255343660299",
+      "events": [
+        "agent_registered"
+      ]
+    },
+    {
+      "step": "hoarding",
+      "actor": "hoardmwdkyak614.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "AP2sCY3Yi5eMukaoKwHEZPViqZN29uPhpPFKF5yg1dsf",
+      "blockHash": "4mQKym4PfZFzFoyhLqwMjqwWB1Z5DiajDYQ4iaHywsWj",
+      "gasBurnt": "3754130408263",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "hoarding",
+      "actor": "hoardmwdkyak614.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": false,
+      "code": "INSUFFICIENT_BUDGET",
+      "txHash": "F819KyYamGzYRVYtyRZcybZADapZoaGZHaV3fVmucxVu",
+      "blockHash": "iQ5ZtUBhia963nZ1VSe5vSuYXR1TT6tUUpxiUd5Mn3n",
+      "gasBurnt": "2343191466547",
+      "events": []
+    },
+    {
+      "step": "hoarding",
+      "actor": "hoardmwdkyak614.circuit-demo.testnet",
+      "method": "execute",
+      "ok": false,
+      "code": "RESERVATION_EXPIRED",
+      "txHash": "oBxpBws6Fn2DnqoVE9qkp7upuWkd3386QvJbh943Kr4",
+      "blockHash": "5tgwB6UQVhMFUefhaHazbpDZodrpMuViPCnBnCp3Qp3U",
+      "gasBurnt": "1896052926225",
+      "events": []
+    },
+    {
+      "step": "hoarding",
+      "actor": "strangermwdkvy5g4.circuit-demo.testnet",
+      "method": "release_expired",
+      "ok": true,
+      "txHash": "BErgV9oCxg7xBdaqMgd7eqt4UR5htgCdaQc4mq3Dk4ry",
+      "blockHash": "AJJi5c6juUSduuRTxur4F7XFQ3BJV5gLmYJBqGhKTekX",
+      "gasBurnt": "2779731792431",
+      "events": [
+        "reservation_released"
+      ]
+    },
+    {
+      "step": "failed-transfer",
+      "actor": "hoardmwdkyak614.circuit-demo.testnet",
+      "method": "reserve",
+      "ok": true,
+      "txHash": "8SdfzhgTyziieomfxozMUwVygGgw8rHaqRSZQAZa9E3p",
+      "blockHash": "8F3wWAemoYpKe5J3N58P2bb6H4pY8hp2enLP5fXNjSGb",
+      "gasBurnt": "3757726519714",
+      "events": [
+        "reservation_created"
+      ]
+    },
+    {
+      "step": "failed-transfer",
+      "actor": "hoardmwdkyak614.circuit-demo.testnet",
+      "method": "execute",
+      "ok": true,
+      "txHash": "CnwRtaV7bpdReRMwpmmuWn6RydRCHtBF2zEmKtBF6CBb",
+      "blockHash": "7YWCNjaHLHLTHenoUEqSUEQ2x4WozhYUnVYZfrhJWJFk",
+      "gasBurnt": "5763701211332",
+      "events": [
+        "execution_started",
+        "execution_failed"
+      ]
+    }
+  ]
+}
