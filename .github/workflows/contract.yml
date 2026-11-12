@@ -72,10 +72,15 @@ jobs:
         run: pnpm install --frozen-lockfile && pnpm -r build && pnpm -r test
       - name: Agent simulator against a local sandbox node
         working-directory: packages/agent-simulator
-        run: node dist/cli.js all --network sandbox --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm
+        run: |
+          node dist/cli.js all --network sandbox --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm
+          # Dress rehearsal of the exact testnet configuration (amounts scaled to 0.1).
+          node dist/cli.js all --network sandbox --scale 0.1 --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out reports/scaled
       - name: Simulator summary
         if: always()
-        run: node .github/scripts/sim-summary.mjs
+        run: |
+          node .github/scripts/sim-summary.mjs
+          node .github/scripts/sim-summary.mjs packages/agent-simulator/reports/scaled
       - uses: actions/upload-artifact@v4
         if: always()
         with:

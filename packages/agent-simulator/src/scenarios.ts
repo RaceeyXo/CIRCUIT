@@ -9,6 +9,20 @@ import { checkInvariants } from "./invariants.js";
 import { Actor, balanceOf, createActor, deployContract, type Network } from "./network.js";
 
 const SEC = 1_000_000_000n;
+
+/**
+ * All treasury, allocation, policy and request amounts are written in "scenario NEAR" and scaled
+ * by `setScale` (1 on sandbox; e.g. 0.1 on testnet, to spend less faucet NEAR). Scaling changes
+ * magnitudes only, never the relationships the checks test.
+ */
+let scalePpm = 1_000_000n;
+export function setScale(factor: number) {
+  if (!(factor > 0 && factor <= 1)) throw new Error("scale must be in (0, 1]");
+  scalePpm = BigInt(Math.round(factor * 1_000_000));
+}
+const N = (near: string) => (parseNear(near) * scalePpm) / 1_000_000n;
+/** Balance for each simulated account: gas plus concurrently attached storage deposits. */
+const GAS_MONEY = parseNear("0.3");
 const HOUR = 3_600n * SEC;
 
 export interface Ctx {
@@ -33,8 +47,9 @@ export function policy(p: Partial<Record<keyof PolicyJson, bigint | number>> = {
 
 /** Deploys a fresh contract, initialises it and funds the treasury with `budget`. */
 export async function setup(net: Network, wasm: string, scenario: string, budget: bigint): Promise<Ctx> {
-  const owner = await createActor(net, "owner", budget + parseNear("5"));
-  const contract = await deployContract(net, wasm, parseNear("5"));
+  const owner = await createActor(net, "owner", budget + GAS_MONEY);
+  // Covers storage staking for the ~230 KB wasm plus state; not part of the treasury.
+  const contract = await deployContract(net, wasm, parseNear("3"));
   const client = new CircuitClient(net.rpcUrl, contract.id);
   const ev = new Evidence(scenario, net.kind, contract.id);
   must(ev.record("setup", contract.id, "new", await client.init(contract.signer(), owner.id)));
@@ -113,14 +128,14 @@ const sum = (xs: bigint[]) => xs.reduce((a, b) => a + b, 0n);
 
 /** Three workers share one 1 NEAR allocation and concurrently ask for 0.6, 0.5 and 0.3. */
 export async function specScenario(net: Network, wasm: string): Promise<Evidence> {
-  const budget = parseNear("1");
+  const budget = N("1");
   const ctx = await setup(net, wasm, "spec", budget);
   const { client, ev } = ctx;
-  const pool = await createActor(net, "pool", parseNear("3"), 3);
-  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, parseNear("1"))));
+  const pool = await createActor(net, "pool", GAS_MONEY, 3);
+  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, GAS_MONEY)));
   must(await register(ctx, ctx.owner, pool, null, policy(), budget));
 
-  const amounts = [parseNear("0.6"), parseNear("0.5"), parseNear("0.3")];
+  const amounts = [N("0.6"), N("0.5"), N("0.3")];
   const reqs = amounts.map((amount, i) => ({ agent: pool, requestId: `worker-${i}`, counterparty: vendors[i]!.id, amount }));
   const results = await reserveAll(ctx, "reserve", reqs);
   const accepted = results.filter((r) => r.out.ok);
@@ -176,18 +191,18 @@ function rng(seed: number) {
 export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5eed): Promise<Evidence> {
   const AGENTS = 10;
   const REQUESTS = 24;
-  const budget = parseNear("10");
-  const childAlloc = parseNear("1");
-  const vendorCap = parseNear("6");
+  const budget = N("10");
+  const childAlloc = N("1");
+  const vendorCap = N("6");
   const ctx = await setup(net, wasm, "concurrency", budget);
   const { client, ev } = ctx;
   const next = rng(seed);
 
-  const root = await createActor(net, "root", parseNear("5"));
-  const vendor = await createActor(net, "vendor", parseNear("1"));
+  const root = await createActor(net, "root", GAS_MONEY);
+  const vendor = await createActor(net, "vendor", GAS_MONEY);
   must(await register(ctx, ctx.owner, root, null, policy({ max_counterparty_exposure: vendorCap }), budget));
   const lanes = Math.ceil(REQUESTS / AGENTS);
-  const agents = await Promise.all(Array.from({ length: AGENTS }, () => createActor(net, "agent", parseNear("2"), lanes)));
+  const agents = await Promise.all(Array.from({ length: AGENTS }, () => createActor(net, "agent", GAS_MONEY, lanes)));
   for (const a of agents) {
     must(await register(ctx, root, a, root, policy({ max_tx_amount: childAlloc, max_counterparty_exposure: vendorCap, max_delegated: 0 }), childAlloc));
   }
@@ -196,7 +211,7 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
     agent: agents[k % AGENTS]!,
     requestId: `job-${seed}-${k}`,
     counterparty: vendor.id,
-    amount: BigInt(300 + (next() % 551)) * parseNear("0.001"),
+    amount: BigInt(300 + (next() % 551)) * N("0.001"),
   }));
   for (let i = reqs.length - 1; i > 0; i--) {
     const j = next() % (i + 1);
@@ -249,8 +264,8 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
     treasury_remaining_after_payouts: near(BigInt((await client.getTreasury()).remaining)),
     distinct_inclusion_blocks: blocks.size,
     submission_wall_clock_ms: wallMs,
-    reserve_latency_ms: stats(results.map((r) => r.ms)),
-    execute_latency_ms: stats(executed.map((e) => e.ms)),
+    reserve_latency_to_final_ms: stats(results.map((r) => r.ms)),
+    execute_latency_to_final_ms: stats(executed.map((e) => e.ms)),
     reserve_gas_tgas_accepted: gasStats(accepted.map((r) => r.out)),
     reserve_gas_tgas_rejected: gasStats(results.filter((r) => !r.out.ok).map((r) => r.out)),
     execute_gas_tgas: gasStats(executed.map((e) => e.ex)),
@@ -261,37 +276,37 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
 // ── Scenario 3: adversarial agents ──────────────────────────────────────────
 
 export async function attackScenario(net: Network, wasm: string): Promise<Evidence> {
-  const budget = parseNear("10");
+  const budget = N("10");
   const ctx = await setup(net, wasm, "attacks", budget);
   const { client, ev, owner } = ctx;
-  const vendor = await createActor(net, "vendor", parseNear("1"));
-  const stranger = await createActor(net, "stranger", parseNear("1"));
+  const vendor = await createActor(net, "vendor", GAS_MONEY);
+  const stranger = await createActor(net, "stranger", GAS_MONEY);
 
   // Hierarchy: root → mid → leaf, plus root → 4 splitter children.
-  const root = await createActor(net, "root", parseNear("3"));
-  const mid = await createActor(net, "mid", parseNear("3"));
-  const leaf = await createActor(net, "leaf", parseNear("3"), 5);
-  must(await register(ctx, owner, root, null, policy({ max_counterparty_exposure: parseNear("0.3") }), parseNear("8")));
-  must(await register(ctx, root, mid, root, policy({ max_counterparty_exposure: parseNear("0.3"), max_delegated: parseNear("1") }), parseNear("2")));
-  must(await register(ctx, mid, leaf, mid, policy({ max_counterparty_exposure: parseNear("0.3"), max_delegated: 0 }), parseNear("1")));
+  const root = await createActor(net, "root", GAS_MONEY);
+  const mid = await createActor(net, "mid", GAS_MONEY);
+  const leaf = await createActor(net, "leaf", GAS_MONEY, 5);
+  must(await register(ctx, owner, root, null, policy({ max_counterparty_exposure: N("0.3") }), N("8")));
+  must(await register(ctx, root, mid, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: N("1") }), N("2")));
+  must(await register(ctx, mid, leaf, mid, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("1")));
 
   // A. Delegation escalation: a child cannot give away more than it has, or exceed its policy.
-  const greedy = await createActor(net, "greedy", parseNear("1"));
-  const esc = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy({ max_counterparty_exposure: parseNear("0.3"), max_delegated: 0 }), parseNear("2.5")));
+  const greedy = await createActor(net, "greedy", GAS_MONEY);
+  const esc = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("2.5")));
   ev.check("A. delegation beyond available budget rejected", esc.rejection?.code === "INSUFFICIENT_BUDGET", esc.rejection?.code ?? "accepted!");
-  const loose = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy(), parseNear("0.1")));
+  const loose = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy(), N("0.1")));
   ev.check("A. child policy looser than parent rejected", loose.rejection?.code === "POLICY_EXCEEDS_PARENT", loose.rejection?.code ?? "accepted!");
-  const self = ev.record("escalation", leaf.id, "delegate_budget", await client.delegateBudget(leaf.signer(), leaf.id, parseNear("0.1")));
+  const self = ev.record("escalation", leaf.id, "delegate_budget", await client.delegateBudget(leaf.signer(), leaf.id, N("0.1")));
   ev.check("A. agent cannot top up its own budget", self.rejection?.code === "UNAUTHORIZED", self.rejection?.code ?? "accepted!");
 
   // B. Duplicate flood: the same request sent 5 times concurrently creates one commitment.
-  const dupes = await reserveAll(ctx, "duplicates", Array.from({ length: 5 }, () => ({ agent: leaf, requestId: "invoice-42", counterparty: vendor.id, amount: parseNear("0.1") })));
+  const dupes = await reserveAll(ctx, "duplicates", Array.from({ length: 5 }, () => ({ agent: leaf, requestId: "invoice-42", counterparty: vendor.id, amount: N("0.1") })));
   const ids = new Set(dupes.filter((d) => d.out.ok).map((d) => d.out.value!.reservation.id));
   const fresh = dupes.filter((d) => d.out.ok && d.out.value!.duplicate === false).length;
   const leafView = await client.getAgent(leaf.id);
-  ev.check("B. 5 concurrent duplicates → exactly one reservation", ids.size === 1 && fresh === 1 && leafView!.reserved === parseNear("0.1").toString(), `ids ${[...ids].join(",")}, new ${fresh}, reserved ${near(BigInt(leafView!.reserved))}`);
+  ev.check("B. 5 concurrent duplicates → exactly one reservation", ids.size === 1 && fresh === 1 && leafView!.reserved === N("0.1").toString(), `ids ${[...ids].join(",")}, new ${fresh}, reserved ${near(BigInt(leafView!.reserved))}`);
   const dupId = [...ids][0]!;
-  const conflict = ev.record("duplicates", leaf.id, "reserve", await client.reserve(leaf.signer(), "invoice-42", vendor.id, parseNear("0.2"), HOUR));
+  const conflict = ev.record("duplicates", leaf.id, "reserve", await client.reserve(leaf.signer(), "invoice-42", vendor.id, N("0.2"), HOUR));
   ev.check("B. reused request id with different amount rejected", conflict.rejection?.code === "REQUEST_ID_CONFLICT", conflict.rejection?.code ?? "accepted!");
 
   // C. Forged settlement: nobody but the contract can deliver a payout result.
@@ -303,29 +318,29 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("C. reservation untouched by forgeries", still!.status === "Reserved", still!.status);
 
   // D. Counterparty splitting: root's 0.3 NEAR cap on one sink binds all its children.
-  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", parseNear("1"))));
-  for (const s of splitters) must(await register(ctx, root, s, root, policy({ max_counterparty_exposure: parseNear("0.3"), max_delegated: 0 }), parseNear("0.2")));
-  const sink = await createActor(net, "sink", parseNear("1"));
-  const split = await reserveAll(ctx, "splitting", splitters.map((s, i) => ({ agent: s, requestId: `split-${i}`, counterparty: sink.id, amount: parseNear("0.15") })));
+  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", GAS_MONEY)));
+  for (const s of splitters) must(await register(ctx, root, s, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("0.2")));
+  const sink = await createActor(net, "sink", GAS_MONEY);
+  const split = await reserveAll(ctx, "splitting", splitters.map((s, i) => ({ agent: s, requestId: `split-${i}`, counterparty: sink.id, amount: N("0.15") })));
   const splitAccepted = sum(split.filter((r) => r.out.ok).map((r) => r.req.amount));
   const rootExposure = BigInt(await client.getExposure(root.id, sink.id));
-  ev.check("D. splitting across 4 children capped at the branch limit", splitAccepted <= parseNear("0.3") && rootExposure === splitAccepted, `accepted ${near(splitAccepted)}, codes ${JSON.stringify(codes(split.map((r) => r.out)))}`);
+  ev.check("D. splitting across 4 children capped at the branch limit", splitAccepted <= N("0.3") && rootExposure === splitAccepted, `accepted ${near(splitAccepted)}, codes ${JSON.stringify(codes(split.map((r) => r.out)))}`);
 
   // E. Revocation: revoking `mid` freezes `leaf` below it, including its open reservation.
   ev.record("revocation", root.id, "revoke_agent", await client.revokeAgent(root.signer(), mid.id));
-  const r1 = ev.record("revocation", leaf.id, "reserve", await client.reserve(leaf.signer(), "after-revoke", vendor.id, parseNear("0.01"), HOUR));
+  const r1 = ev.record("revocation", leaf.id, "reserve", await client.reserve(leaf.signer(), "after-revoke", vendor.id, N("0.01"), HOUR));
   ev.check("E. descendant of revoked agent cannot reserve", r1.rejection?.code === "ANCESTOR_REVOKED", r1.rejection?.code ?? "accepted!");
   const r2 = ev.record("revocation", leaf.id, "execute", await client.execute(leaf.signer(), dupId));
   ev.check("E. descendant of revoked agent cannot execute", r2.rejection?.code === "ANCESTOR_REVOKED", r2.rejection?.code ?? "accepted!");
-  const r3 = ev.record("revocation", mid.id, "reserve", await client.reserve(mid.signer(), "self", vendor.id, parseNear("0.01"), HOUR));
+  const r3 = ev.record("revocation", mid.id, "reserve", await client.reserve(mid.signer(), "self", vendor.id, N("0.01"), HOUR));
   ev.check("E. revoked agent cannot reserve", r3.rejection?.code === "AGENT_REVOKED", r3.rejection?.code ?? "accepted!");
   const rel = ev.record("revocation", root.id, "release", await client.release(root.signer(), dupId));
   ev.check("E. healthy ancestor can release the frozen reservation", rel.ok && rel.value?.release_reason === "Ancestor", rel.ok ? rel.value!.release_reason ?? "" : rel.rejection?.code ?? "");
 
   // F. Hoarding: reserve the whole budget with a short TTL; it expires and anyone can free it.
-  const hoarder = await createActor(net, "hoard", parseNear("2"));
-  must(await register(ctx, owner, hoarder, null, policy(), parseNear("0.5")));
-  const h = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "hoard", vendor.id, parseNear("0.5"), 3n * SEC));
+  const hoarder = await createActor(net, "hoard", GAS_MONEY);
+  must(await register(ctx, owner, hoarder, null, policy(), N("0.5")));
+  const h = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "hoard", vendor.id, N("0.5"), 3n * SEC));
   const blocked = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "next", vendor.id, 1n, HOUR));
   ev.check("F. budget locked while reservation is live", blocked.rejection?.code === "INSUFFICIENT_BUDGET", blocked.rejection?.code ?? "accepted!");
   await new Promise((r) => setTimeout(r, 6_000));
@@ -336,7 +351,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
 
   // G. Payment to a missing account: the transfer fails, funds return, reservation reopens.
   const ghost = `ghost${Date.now()}.${net.funder.accountId}`;
-  const g = ev.record("failed-transfer", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "ghost", ghost, parseNear("0.2"), HOUR));
+  const g = ev.record("failed-transfer", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "ghost", ghost, N("0.2"), HOUR));
   const gx = ev.record("failed-transfer", hoarder.id, "execute", await client.execute(hoarder.signer(), g.value!.reservation.id));
   const gv = await client.getReservation(g.value!.reservation.id);
   ev.check("G. failed transfer returns reservation to Reserved", gx.ok && gx.value === false && gv!.status === "Reserved" && gv!.failed_attempts === 1, `settled=${gx.value}, status ${gv!.status}, attempts ${gv!.failed_attempts}`);

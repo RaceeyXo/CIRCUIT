@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// circuit-sim <spec|concurrency|attacks|all> [--network sandbox|external] [--wasm path] [--out dir] [--seed n]
+// circuit-sim <spec|concurrency|attacks|all> [--network sandbox|external] [--wasm path] [--out dir] [--seed n] [--scale f]
 //
 // Exit code 0 only if every check of every scenario passed. Reports are written as JSON.
 
@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 
 import type { Evidence } from "./evidence.js";
 import { connect } from "./network.js";
-import { attackScenario, concurrencyScenario, specScenario } from "./scenarios.js";
+import { attackScenario, concurrencyScenario, setScale, specScenario } from "./scenarios.js";
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -16,6 +16,7 @@ const { values, positionals } = parseArgs({
     wasm: { type: "string", default: process.env.CIRCUIT_WASM ?? "../../target/near/circuit/circuit.wasm" },
     out: { type: "string", default: "reports" },
     seed: { type: "string", default: "24301" },
+    scale: { type: "string", default: "1" },
   },
 });
 
@@ -32,6 +33,7 @@ if (!selected.every((s) => s in runs)) {
   process.exit(2);
 }
 
+setScale(Number(values.scale));
 const net = await connect(network);
 let ok = true;
 try {

@@ -79,6 +79,7 @@ export async function createActor(net: Network, prefix: string, balance: bigint,
   const keys = Array.from({ length: Math.max(1, lanes) }, () => KeyPair.fromRandom("ed25519"));
   await net.funder.signAndSendTransaction({
     receiverId: id,
+    waitUntil: "FINAL",
     actions: [
       actions.createAccount(),
       actions.transfer(balance),
@@ -92,7 +93,7 @@ export async function createActor(net: Network, prefix: string, balance: bigint,
 export async function deployContract(net: Network, wasmPath: string, balance: bigint): Promise<Actor> {
   const code = new Uint8Array(await readFile(wasmPath));
   const actor = await createActor(net, "circuit", balance);
-  await actor.signer().signAndSendTransaction({ receiverId: actor.id, actions: [actions.deployContract(code)] });
+  await actor.signer().signAndSendTransaction({ receiverId: actor.id, actions: [actions.deployContract(code)], waitUntil: "FINAL" });
   return actor;
 }
 

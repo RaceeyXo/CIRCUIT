@@ -1,0 +1,62 @@
+name: testnet
+
+# Deploys fresh CIRCUIT contracts to NEAR testnet and runs every simulator scenario against them.
+# Trigger: push a tag `testnet-run-*` (or "Run workflow" in the Actions tab).
+# Needs repository secrets CIRCUIT_FUNDER_ID and CIRCUIT_FUNDER_KEY (a funded testnet account).
+# Spends only testnet NEAR. Reports are committed to evidence/testnet/.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["testnet-run-*"]
+
+permissions:
+  contents: write
+
+concurrency: testnet
+
+jobs:
+  testnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-near
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      - name: Build wasm
+        working-directory: contracts/circuit
+        run: cargo near build non-reproducible-wasm
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile && pnpm -r build
+      - name: Run scenarios on testnet
+        working-directory: packages/agent-simulator
+        env:
+          CIRCUIT_RPC_URL: https://test.rpc.fastnear.com
+          CIRCUIT_FUNDER_ID: ${{ secrets.CIRCUIT_FUNDER_ID }}
+          CIRCUIT_FUNDER_KEY: ${{ secrets.CIRCUIT_FUNDER_KEY }}
+        run: |
+          test -n "$CIRCUIT_FUNDER_ID" || { echo "::error::set the CIRCUIT_FUNDER_ID / CIRCUIT_FUNDER_KEY repository secrets"; exit 1; }
+          node dist/cli.js all --network external --scale 0.1 \
+            --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet
+      - name: Summary
+        if: always()
+        run: node .github/scripts/sim-summary.mjs evidence/testnet
+      - name: Commit evidence
+        if: always()
+        run: |
+          [ -d evidence/testnet ] || exit 0
+          sha256sum target/near/circuit/circuit.wasm > evidence/testnet/wasm.sha256 || true
+          git config user.name "circuit-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add evidence/testnet
+          git commit -m "Testnet evidence from run ${{ github.run_id }}" || exit 0
+          git push origin HEAD:main

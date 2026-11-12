@@ -9,7 +9,8 @@ import type { AgentView, PolicyJson, ReservationView, ReserveResult, TreasuryVie
 import { TGAS } from "./units.js";
 
 /** Storage deposit attached to state-growing calls; the contract refunds the excess. */
-export const STORAGE_DEPOSIT = 100_000_000_000_000_000_000_000n; // 0.1 NEAR
+// ~4x the largest measured per-call storage cost (~0.005 NEAR); the contract refunds the excess.
+export const STORAGE_DEPOSIT = 20_000_000_000_000_000_000_000n; // 0.02 NEAR
 export const DEFAULT_GAS = 30n * TGAS;
 export const EXECUTE_GAS = 100n * TGAS;
 
@@ -39,6 +40,8 @@ export class CircuitClient {
       receiverId: this.contractId,
       actions: [actions.functionCall(method, args, opts.gas ?? DEFAULT_GAS, opts.deposit ?? 0n)],
       throwOnFailure: false,
+      // Wait for finality so every recorded outcome, and every balance read after it, is final.
+      waitUntil: "FINAL",
     });
     return interpretOutcome<T>(raw);
   }
