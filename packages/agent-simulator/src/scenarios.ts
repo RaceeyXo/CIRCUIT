@@ -24,8 +24,10 @@ export function setScale(factor: number) {
   scalePpm = BigInt(Math.round(factor * 1_000_000));
 }
 const N = (near: string) => (parseNear(near) * scalePpm) / 1_000_000n;
-/** Balance for each simulated account: gas plus concurrently attached storage deposits. */
-const GAS_MONEY = parseNear("0.3");
+/** Balance for accounts that sign: gas plus concurrently attached storage deposits (0.02 each). */
+const GAS_MONEY = parseNear("0.2");
+/** Balance for accounts that only receive payments and never sign. */
+const PASSIVE_MONEY = parseNear("0.01");
 const HOUR = 3_600n * SEC;
 
 export interface Ctx {
@@ -135,7 +137,7 @@ export async function specScenario(net: Network, wasm: string): Promise<Evidence
   const ctx = await setup(net, wasm, "spec", budget);
   const { client, ev } = ctx;
   const pool = await createActor(net, "pool", GAS_MONEY, 3);
-  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, GAS_MONEY)));
+  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, PASSIVE_MONEY)));
   must(await register(ctx, ctx.owner, pool, null, policy(), budget));
 
   const amounts = [N("0.6"), N("0.5"), N("0.3")];
@@ -202,7 +204,7 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
   const next = rng(seed);
 
   const root = await createActor(net, "root", GAS_MONEY);
-  const vendor = await createActor(net, "vendor", GAS_MONEY);
+  const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
   must(await register(ctx, ctx.owner, root, null, policy({ max_counterparty_exposure: vendorCap }), budget));
   const lanes = Math.ceil(REQUESTS / AGENTS);
   const agents = await Promise.all(Array.from({ length: AGENTS }, () => createActor(net, "agent", GAS_MONEY, lanes)));
@@ -282,7 +284,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   const budget = N("10");
   const ctx = await setup(net, wasm, "attacks", budget);
   const { client, ev, owner } = ctx;
-  const vendor = await createActor(net, "vendor", GAS_MONEY);
+  const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
   const stranger = await createActor(net, "stranger", GAS_MONEY);
 
   // Hierarchy: root → mid → leaf, plus root → 4 splitter children.
@@ -294,7 +296,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   must(await register(ctx, mid, leaf, mid, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("1")));
 
   // A. Delegation escalation: a child cannot give away more than it has, or exceed its policy.
-  const greedy = await createActor(net, "greedy", GAS_MONEY);
+  const greedy = await createActor(net, "greedy", PASSIVE_MONEY);
   const esc = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("2.5")));
   ev.check("A. delegation beyond available budget rejected", esc.rejection?.code === "INSUFFICIENT_BUDGET", esc.rejection?.code ?? "accepted!");
   const loose = ev.record("escalation", mid.id, "register_agent", await client.registerAgent(mid.signer(), greedy.id, mid.id, policy(), N("0.1")));
@@ -323,7 +325,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   // D. Counterparty splitting: root's 0.3 NEAR cap on one sink binds all its children.
   const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", GAS_MONEY)));
   for (const s of splitters) must(await register(ctx, root, s, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("0.2")));
-  const sink = await createActor(net, "sink", GAS_MONEY);
+  const sink = await createActor(net, "sink", PASSIVE_MONEY);
   const split = await reserveAll(ctx, "splitting", splitters.map((s, i) => ({ agent: s, requestId: `split-${i}`, counterparty: sink.id, amount: N("0.15") })));
   const splitAccepted = sum(split.filter((r) => r.out.ok).map((r) => r.req.amount));
   const rootExposure = BigInt(await client.getExposure(root.id, sink.id));
@@ -375,7 +377,7 @@ export async function baselineScenario(net: Network): Promise<Evidence> {
   const amounts = [N("0.6"), N("0.5"), N("0.3")];
   // The wallet holds more than the budget, as real hot wallets do; the budget is the policy.
   const wallet = await createActor(net, "hotwallet", budget * 3n + GAS_MONEY, amounts.length);
-  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, GAS_MONEY)));
+  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, PASSIVE_MONEY)));
   const ev = new Evidence("baseline", net.kind, wallet.id);
   let spentSoFar = 0n; // the shared off-chain "ledger" each agent reads
 
