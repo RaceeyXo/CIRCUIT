@@ -19,7 +19,8 @@ one enforceable limit. Design: [docs/architecture.md](docs/architecture.md). Thr
 - `contracts/circuit/`: Rust contract (near-sdk 5.30), with unit and property tests in `src/`
   and sandbox tests in `tests/`
 - `packages/shared`, `packages/agent-simulator`: TS, pnpm workspace
-- `apps/web`: read-only dashboard (Vite + TS). It reads contract views straight from the NEAR RPC.
+- `apps/web`: landing page + read-only console (Vite + TS + Tailwind v4; tokens in `src/tailwind.css`).
+  The console reads contract views straight from the NEAR RPC.
   There is no off-chain API (cut 2026-11-12 for the deadline).
 - `docs/`: architecture, threat model, contract spec, benchmarks
 

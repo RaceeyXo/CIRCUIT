@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* CIRCUIT design tokens → Tailwind theme (bg-surface, text-accent, font-mono, rounded-card, …). */
+@theme {
+  --color-bg: #070707;
+  --color-surface: #121212;
+  --color-surface-2: #1a1a1a;
+  --color-well: #0b0b0b;
+  --color-line: #262626;
+  --color-dash: #3a3a3a;
+  --color-ink: #f6f4ef;
+  --color-ink-2: #bdbab3;
+  --color-muted: #85827b;
+
+  --color-accent: #f5b544; /* signal amber: the one colour that means "money under control" */
+  --color-accent-ink: #1a1204;
+
+  --color-ok: #6fd39a;
+  --color-bad: #ff7a6b;
+  --color-spent: #7fb2ff;
+  --color-reserved: #f5b544;
+  --color-flight: #ff9d5c;
+  --color-delegated: #b9a7ff;
+  --color-idle: #3b403d;
+  --color-free: #1d1d1d;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius-card: 20px;
+  --radius-band: 28px;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-marquee: marquee 36s linear infinite;
+  @keyframes float { 50% { transform: translateY(-8px); } }
+  @keyframes pulse-dot { 50% { opacity: 0.35; } }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+}
+
+@layer base {
+  html { scroll-behavior: smooth; color-scheme: dark; }
+  body { @apply bg-bg text-ink font-sans antialiased; }
+  :focus-visible { @apply outline-2 outline-offset-3 outline-accent rounded-md; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+}
+
+/* Small, repeated patterns. Everything else is utilities in the markup. */
+@layer components {
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-full bg-accent px-[22px] py-3 font-semibold text-accent-ink no-underline
+      transition hover:-translate-y-px hover:brightness-105 cursor-pointer;
+  }
+  .btn-sm { @apply px-4 py-2 text-sm; }
+  .btn-ghost { @apply bg-transparent text-ink ring-1 ring-inset ring-dash; }
+  .pill { @apply inline-block whitespace-nowrap rounded-full border border-current px-2 font-mono text-[11px] leading-[1.6] font-medium; }
+  .label { @apply inline-block rounded-full border border-dash px-4 py-1.5 text-sm font-medium; }
+  .row-d { @apply flex items-center justify-between gap-3 rounded-xl border border-dashed border-dash bg-[#161616] px-4 py-3 text-sm; }
+  .chip {
+    @apply flex items-center gap-3 rounded-[14px] border border-dashed border-dash bg-[#141414]/90 px-4 py-3 text-left backdrop-blur-sm animate-float;
+  }
+  .dot-ok { @apply size-[30px] shrink-0 rounded-full bg-ok/15 ring-2 ring-inset ring-ok; }
+  .dot-bad { @apply size-[30px] shrink-0 rounded-full bg-bad/12 ring-2 ring-inset ring-bad; }
+  .sw { @apply mr-1.5 inline-block size-2.5 rounded-[2px] align-[-1px]; }
+
+  /* Capsule nav: full-width bar that becomes a floating pill once the page scrolls. */
+  .nav { @apply pointer-events-auto flex w-full max-w-[1180px] items-center gap-7 rounded-full border border-transparent py-2.5 pr-2.5 pl-[22px] transition-all duration-300; }
+  .nav.floating { @apply max-w-[860px] border-line bg-surface/80 backdrop-blur-md; }
+
+  /* Bars used by the console (segment widths are set inline from contract data). */
+  .bar { @apply flex h-2.5 overflow-hidden rounded-[3px] bg-free; }
+  .seg { @apply block h-full min-w-[2px]; }
+}

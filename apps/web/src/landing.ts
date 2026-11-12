@@ -1,4 +1,4 @@
-import "./landing.css";
+import "./tailwind.css";
 
 // Pill nav becomes a floating capsule once the page scrolls.
 const nav = document.querySelector<HTMLElement>(".nav");

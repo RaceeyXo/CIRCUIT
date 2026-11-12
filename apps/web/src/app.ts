@@ -1,4 +1,4 @@
-import "./app.css";
+import "./tailwind.css";
 
 import type { AgentView, ReservationView, TreasuryView } from "@circuit/shared/types";
 import { formatNear } from "@circuit/shared/units";
@@ -38,10 +38,25 @@ function rel(ns: string): string {
 }
 
 // ── Live view ───────────────────────────────────────────────────────────────
-function segBar(parts: { cls: string; v: bigint; label: string }[], whole: bigint): string {
-  return `<div class="bar" role="img" aria-label="${esc(parts.map((p) => `${p.label} ${near(p.v)}`).join(", "))}">${parts
+/** Full class strings (Tailwind only generates classes it can see whole in the source). */
+const SEG = {
+  spent: "bg-spent",
+  reserved: "bg-reserved",
+  idle: "bg-idle",
+  free: "bg-free ring-1 ring-inset ring-dash",
+  delegated: "bg-delegated",
+} as const;
+const STATUS_PILL: Record<string, string> = {
+  Reserved: "text-reserved",
+  Executing: "text-flight",
+  Settled: "text-ok",
+  Released: "text-muted",
+};
+
+function segBar(parts: { cls: keyof typeof SEG; v: bigint; label: string }[], whole: bigint, height = "h-2.5"): string {
+  return `<div class="bar ${height}" role="img" aria-label="${esc(parts.map((p) => `${p.label} ${near(p.v)}`).join(", "))}">${parts
     .filter((p) => p.v > 0n)
-    .map((p) => `<span class="seg ${p.cls}" style="width:${pct(p.v, whole)}%" title="${esc(p.label)}: ${near(p.v, 6)} NEAR"></span>`)
+    .map((p) => `<span class="seg ${SEG[p.cls]}" style="width:${pct(p.v, whole)}%" title="${esc(p.label)}: ${near(p.v, 6)} NEAR"></span>`)
     .join("")}</div>`;
 }
 
@@ -51,16 +66,16 @@ function renderTreasury(t: TreasuryView): string {
   const reserved = big(t.total_reserved);
   const allocated = big(t.allocated);
   const idle = allocated - spent - reserved;
-  const stat = (label: string, v: string, cls = "") =>
-    `<div class="stat ${cls}"><div class="k">${label}</div><div class="v num">${near(v)}</div></div>`;
+  const stat = (label: string, v: string, border = "border-line") =>
+    `<div class="border-l-3 ${border} pl-2.5"><div class="text-[11px] tracking-[0.08em] text-muted uppercase">${label}</div><div class="mt-0.5 font-mono text-[26px] font-semibold tracking-[-0.03em] tabular-nums">${near(v)}</div></div>`;
   return `
-    <div class="stats">
+    <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-6">
       ${stat("Budget", t.total_budget)}
       ${stat("Allocated", t.allocated)}
-      ${stat("Reserved", t.total_reserved, "c-reserved")}
-      ${stat("In flight", t.in_flight, "c-flight")}
-      ${stat("Spent", t.total_spent, "c-spent")}
-      ${stat("Remaining", t.remaining, "c-remaining")}
+      ${stat("Reserved", t.total_reserved, "border-reserved")}
+      ${stat("In flight", t.in_flight, "border-flight")}
+      ${stat("Spent", t.total_spent, "border-spent")}
+      ${stat("Remaining", t.remaining, "border-ok")}
     </div>
     ${segBar(
       [
@@ -71,17 +86,17 @@ function renderTreasury(t: TreasuryView): string {
       ],
       budget,
     )}
-    <div class="legend">
-      <span><i class="sw spent"></i>Spent</span><span><i class="sw reserved"></i>Reserved</span>
-      <span><i class="sw idle"></i>Allocated, uncommitted</span><span><i class="sw free"></i>Unallocated</span>
-      <span class="muted">${t.agent_count} agents · ${t.reservation_count} reservations${t.paused ? ' · <b class="pill bad">PAUSED</b>' : ""}</span>
+    <div class="mt-2.5 flex flex-wrap gap-3.5 text-xs text-muted">
+      <span><i class="sw bg-spent"></i>Spent</span><span><i class="sw bg-reserved"></i>Reserved</span>
+      <span><i class="sw bg-idle"></i>Allocated, uncommitted</span><span><i class="sw bg-free ring-1 ring-inset ring-dash"></i>Unallocated</span>
+      <span>${t.agent_count} agents · ${t.reservation_count} reservations${t.paused ? ' · <b class="pill text-bad">PAUSED</b>' : ""}</span>
     </div>`;
 }
 
 const open = new Set<string>();
 
 function renderAgents(agents: AgentView[]): string {
-  if (agents.length === 0) return `<p class="empty">No agents registered yet.</p>`;
+  if (agents.length === 0) return `<p class="py-3 text-muted">No agents registered yet.</p>`;
   const children = new Map<string | null, AgentView[]>();
   for (const a of agents) children.set(a.parent, [...(children.get(a.parent) ?? []), a]);
   const rows: string[] = [];
@@ -90,11 +105,11 @@ function renderAgents(agents: AgentView[]): string {
       const alloc = big(a.allocation);
       const kids = children.get(a.id)?.length ?? 0;
       rows.push(`
-        <li class="agent ${a.status === "Revoked" ? "revoked" : ""}" style="--depth:${depth}">
-          <button class="row" data-agent="${esc(a.id)}" aria-expanded="${open.has(a.id)}">
-            <span class="name" title="${esc(a.id)}">${esc(short(a.id))}${kids ? ` <span class="muted">· ${kids}</span>` : ""}</span>
-            <span class="pill ${a.status === "Revoked" ? "bad" : "ok"}">${a.status}</span>
-            <span class="num avail">${near(a.available)} <span class="muted">/ ${near(a.allocation)}</span></span>
+        <li class="relative ${depth > 0 ? "border-l border-dashed border-line pl-2" : ""} ${a.status === "Revoked" ? "[&_.bar]:opacity-45" : ""}" style="margin-left:${Math.max(0, depth - 1) * 18 + (depth > 0 ? 8 : 0)}px">
+          <button class="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2.5 gap-y-1.5 border-b border-line px-1 py-2.5 text-left hover:bg-accent/5 [&>.bar]:col-span-3" data-agent="${esc(a.id)}" aria-expanded="${open.has(a.id)}">
+            <span class="truncate font-mono text-[13px] ${a.status === "Revoked" ? "text-muted line-through" : ""}" title="${esc(a.id)}">${esc(short(a.id))}${kids ? ` <span class="text-muted">· ${kids}</span>` : ""}</span>
+            <span class="pill ${a.status === "Revoked" ? "text-bad" : "text-ok"}">${a.status}</span>
+            <span class="font-mono text-[13px] tabular-nums">${near(a.available)} <span class="text-muted">/ ${near(a.allocation)}</span></span>
             ${segBar(
               [
                 { cls: "spent", v: big(a.spent), label: "Spent" },
@@ -102,19 +117,20 @@ function renderAgents(agents: AgentView[]): string {
                 { cls: "delegated", v: big(a.delegated), label: "Delegated to children" },
               ],
               alloc,
+              "h-1.5",
             )}
           </button>
           ${
             open.has(a.id)
-              ? `<dl class="policy">
-                  <div><dt>Spent</dt><dd class="num">${near(a.spent, 6)}</dd></div>
-                  <div><dt>Reserved</dt><dd class="num">${near(a.reserved, 6)} (${a.pending_count} live)</dd></div>
-                  <div><dt>Delegated</dt><dd class="num">${near(a.delegated, 6)}</dd></div>
-                  <div><dt>Max per tx</dt><dd class="num">${near(a.policy.max_tx_amount)}</dd></div>
-                  <div><dt>Max pending</dt><dd class="num">${near(a.policy.max_pending_amount)} · ${a.policy.max_pending_count} req</dd></div>
-                  <div><dt>Max per counterparty</dt><dd class="num">${near(a.policy.max_counterparty_exposure)}</dd></div>
-                  <div><dt>Max delegated</dt><dd class="num">${near(a.policy.max_delegated)}</dd></div>
-                  <div><dt>Max TTL</dt><dd class="num">${Number(big(a.policy.max_reservation_ttl_ns) / 1_000_000_000n)} s</dd></div>
+              ? `<dl class="grid grid-cols-2 gap-x-4 gap-y-1.5 border-b border-line px-1.5 pt-2.5 pb-3.5 text-xs [&>div]:flex [&>div]:justify-between [&>div]:gap-2 [&_dt]:text-muted [&_dd]:font-mono">
+                  <div><dt>Spent</dt><dd>${near(a.spent, 6)}</dd></div>
+                  <div><dt>Reserved</dt><dd>${near(a.reserved, 6)} (${a.pending_count} live)</dd></div>
+                  <div><dt>Delegated</dt><dd>${near(a.delegated, 6)}</dd></div>
+                  <div><dt>Max per tx</dt><dd>${near(a.policy.max_tx_amount)}</dd></div>
+                  <div><dt>Max pending</dt><dd>${near(a.policy.max_pending_amount)} · ${a.policy.max_pending_count} req</dd></div>
+                  <div><dt>Max per counterparty</dt><dd>${near(a.policy.max_counterparty_exposure)}</dd></div>
+                  <div><dt>Max delegated</dt><dd>${near(a.policy.max_delegated)}</dd></div>
+                  <div><dt>Max TTL</dt><dd>${Number(big(a.policy.max_reservation_ttl_ns) / 1_000_000_000n)} s</dd></div>
                 </dl>`
               : ""
           }
@@ -123,25 +139,31 @@ function renderAgents(agents: AgentView[]): string {
     }
   };
   walk(null, 0);
-  return `<ul class="tree">${rows.join("")}</ul>`;
+  return `<ul class="mt-2">${rows.join("")}</ul>`;
 }
 
 function renderReservations(rs: ReservationView[]): string {
-  if (rs.length === 0) return `<p class="empty">No reservations yet.</p>`;
-  return `<div class="scroll"><table>
-    <thead><tr><th>#</th><th>Status</th><th>Agent → counterparty</th><th class="r">Amount</th><th>When</th></tr></thead>
+  if (rs.length === 0) return `<p class="py-3 text-muted">No reservations yet.</p>`;
+  return `<div class="overflow-x-auto"><table class="${TABLE}">
+    <thead><tr><th>#</th><th>Status</th><th>Agent → counterparty</th><th class="text-right">Amount</th><th>When</th></tr></thead>
     <tbody>${rs
       .map(
         (r) => `<tr>
-        <td class="num muted">${esc(r.id)}</td>
-        <td><span class="pill st-${r.status.toLowerCase()}">${r.status}${r.release_reason ? ` · ${r.release_reason}` : ""}</span>${r.failed_attempts ? ` <span class="pill bad" title="failed payout attempts">${r.failed_attempts}× failed</span>` : ""}</td>
-        <td class="ids"><span title="${esc(r.agent)}">${esc(short(r.agent))}</span> → <span title="${esc(r.counterparty)}">${esc(short(r.counterparty))}</span><div class="muted small">${esc(r.request_id)}</div></td>
-        <td class="num r">${near(r.amount)}</td>
-        <td class="muted small">${r.closed_at ? `closed ${rel(r.closed_at)}` : `expires ${rel(r.expires_at)}`}</td>
+        <td class="font-mono text-muted">${esc(r.id)}</td>
+        <td><span class="pill ${STATUS_PILL[r.status] ?? "text-muted"}">${r.status}${r.release_reason ? ` · ${r.release_reason}` : ""}</span>${r.failed_attempts ? ` <span class="pill text-bad" title="failed payout attempts">${r.failed_attempts}× failed</span>` : ""}</td>
+        <td class="font-mono text-xs break-all"><span title="${esc(r.agent)}">${esc(short(r.agent))}</span> → <span title="${esc(r.counterparty)}">${esc(short(r.counterparty))}</span><div class="text-muted">${esc(r.request_id)}</div></td>
+        <td class="text-right font-mono tabular-nums">${near(r.amount)}</td>
+        <td class="text-xs text-muted">${r.closed_at ? `closed ${rel(r.closed_at)}` : `expires ${rel(r.expires_at)}`}</td>
       </tr>`,
       )
       .join("")}</tbody></table></div>`;
 }
+
+const TABLE =
+  "w-full border-collapse text-[13px] [&_th]:border-b [&_th]:border-line [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:text-[11px] [&_th]:font-medium [&_th]:tracking-[0.06em] [&_th]:text-muted [&_th]:uppercase [&_td]:border-b [&_td]:border-line [&_td]:p-2 [&_td]:align-top";
+const STATUS_BASE =
+  "ml-auto flex max-w-[60%] items-center gap-1.5 truncate font-mono text-xs before:size-[7px] before:shrink-0 before:rounded-full before:content-['']";
+const STATUS_KIND = { ok: "text-muted before:bg-ok", bad: "text-bad before:bg-bad", idle: "text-muted before:bg-muted" } as const;
 
 let timer: number | undefined;
 let inFlight = false;
@@ -166,7 +188,7 @@ async function refresh() {
 
 function setStatus(kind: "ok" | "bad" | "idle", text: string) {
   const el = $("#status");
-  el.className = `status ${kind}`;
+  el.className = `${STATUS_BASE} ${STATUS_KIND[kind]}`;
   el.textContent = text;
 }
 
@@ -194,22 +216,35 @@ interface Report {
 
 function renderReport(r: Report): string {
   const passed = r.checks.filter((c) => c.pass).length;
-  const txLink = (h: string) => (explorer && r.network === "external" ? `<a href="${explorer}${esc(h)}" target="_blank" rel="noopener">${esc(h.slice(0, 10))}…</a>` : esc(h.slice(0, 10)) + "…");
-  return `<article class="report">
-    <header><h3>${esc(r.scenario)}</h3>
-      <span class="pill ${r.passed ? "ok" : "bad"}">${r.passed ? "PASSED" : "FAILED"} ${passed}/${r.checks.length}</span>
-      <span class="muted small">${esc(r.network === "external" ? network : "sandbox")} · ${esc(r.contract)} · ${esc(new Date(r.started_at).toLocaleString())}</span>
-      <button class="link" data-watch="${esc(r.contract)}">Watch this contract live →</button>
+  const txLink = (h: string) =>
+    explorer && r.network === "external"
+      ? `<a class="text-accent" href="${explorer}${esc(h)}" target="_blank" rel="noopener">${esc(h.slice(0, 10))}…</a>`
+      : esc(h.slice(0, 10)) + "…";
+  return `<article class="mb-4 rounded-card border border-line bg-surface p-[18px]">
+    <header class="mb-3 flex flex-wrap items-center gap-2.5">
+      <h3 class="text-base font-semibold capitalize">${esc(r.scenario)}</h3>
+      <span class="pill ${r.passed ? "text-ok" : "text-bad"}">${r.passed ? "PASSED" : "FAILED"} ${passed}/${r.checks.length}</span>
+      <span class="text-xs text-muted">${esc(r.network === "external" ? network : "sandbox")} · ${esc(r.contract)} · ${esc(new Date(r.started_at).toLocaleString())}</span>
+      <button class="ml-auto cursor-pointer text-accent" data-watch="${esc(r.contract)}">Watch this contract live →</button>
     </header>
-    <ol class="checks">${r.checks.map((c) => `<li class="${c.pass ? "pass" : "fail"}"><b>${c.pass ? "PASS" : "FAIL"}</b> ${esc(c.name)} <span class="muted">— ${esc(c.detail)}</span></li>`).join("")}</ol>
-    ${Object.keys(r.metrics).length ? `<details><summary>Metrics</summary><pre>${esc(JSON.stringify(r.metrics, null, 2))}</pre></details>` : ""}
-    <details><summary>${r.transactions.length} transactions</summary><div class="scroll"><table>
-      <thead><tr><th>Step</th><th>Actor</th><th>Method</th><th>Result</th><th class="r">Gas (Tgas)</th><th>Tx</th></tr></thead>
+    <ol class="mb-3 list-decimal pl-5 [&>li]:py-0.5">${r.checks
+      .map(
+        (c) =>
+          `<li><b class="font-mono text-[11px] ${c.pass ? "text-ok" : "text-bad"}">${c.pass ? "PASS" : "FAIL"}</b> ${esc(c.name)} <span class="text-muted">— ${esc(c.detail)}</span></li>`,
+      )
+      .join("")}</ol>
+    ${
+      Object.keys(r.metrics).length
+        ? `<details class="mt-2"><summary class="cursor-pointer text-muted">Metrics</summary><pre class="overflow-x-auto rounded-md bg-bg p-3 font-mono text-xs">${esc(JSON.stringify(r.metrics, null, 2))}</pre></details>`
+        : ""
+    }
+    <details class="mt-2"><summary class="cursor-pointer text-muted">${r.transactions.length} transactions</summary><div class="overflow-x-auto"><table class="${TABLE}">
+      <thead><tr><th>Step</th><th>Actor</th><th>Method</th><th>Result</th><th class="text-right">Gas (Tgas)</th><th>Tx</th></tr></thead>
       <tbody>${r.transactions
         .map(
-          (t) => `<tr><td>${esc(t.step)}</td><td class="ids">${esc(short(t.actor))}</td><td>${esc(t.method)}</td>
-          <td>${t.ok ? '<span class="pill ok">ok</span>' : `<span class="pill bad">${esc(t.code ?? "failed")}</span>`}</td>
-          <td class="num r">${(Number(big(t.gasBurnt) / 1_000_000_000n) / 1000).toFixed(3)}</td><td class="num">${txLink(t.txHash)}</td></tr>`,
+          (t) => `<tr><td>${esc(t.step)}</td><td class="font-mono text-xs break-all">${esc(short(t.actor))}</td><td>${esc(t.method)}</td>
+          <td>${t.ok ? '<span class="pill text-ok">ok</span>' : `<span class="pill text-bad">${esc(t.code ?? "failed")}</span>`}</td>
+          <td class="text-right font-mono tabular-nums">${(Number(big(t.gasBurnt) / 1_000_000_000n) / 1000).toFixed(3)}</td><td class="font-mono">${txLink(t.txHash)}</td></tr>`,
         )
         .join("")}</tbody></table></div></details>
   </article>`;
@@ -217,17 +252,17 @@ function renderReport(r: Report): string {
 
 async function loadReports(urls: string[]) {
   const out = $("#reports");
-  out.innerHTML = `<p class="muted">Loading…</p>`;
+  out.innerHTML = `<p class="text-muted">Loading…</p>`;
   const html: string[] = [];
   for (const u of urls) {
     try {
       const r = (await (await fetch(u)).json()) as Report;
       html.push(renderReport(r));
     } catch (err) {
-      html.push(`<p class="bad">Could not load ${esc(u)}: ${esc((err as Error).message)}</p>`);
+      html.push(`<p class="text-bad">Could not load ${esc(u)}: ${esc((err as Error).message)}</p>`);
     }
   }
-  out.innerHTML = html.join("") || `<p class="empty">No reports.</p>`;
+  out.innerHTML = html.join("") || `<p class="py-3 text-muted">No reports.</p>`;
 }
 
 // ── Wiring ──────────────────────────────────────────────────────────────────
