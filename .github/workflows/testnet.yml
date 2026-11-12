@@ -45,8 +45,9 @@ jobs:
           CIRCUIT_FUNDER_KEY: ${{ secrets.CIRCUIT_FUNDER_KEY }}
         run: |
           test -n "$CIRCUIT_FUNDER_ID" || { echo "::error::set the CIRCUIT_FUNDER_ID / CIRCUIT_FUNDER_KEY repository secrets"; exit 1; }
+          set -o pipefail
           node dist/cli.js all --network external --scale 0.1 \
-            --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet
+            --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet 2>&1 | tee $GITHUB_WORKSPACE/sim.log
       - name: Annotate failure
         if: failure()
         run: |
