@@ -91,6 +91,19 @@ Concurrency run, seed `0x5eed`:
 
 The latencies are for a local single-node sandbox and say nothing about testnet latency.
 
+## Baseline vs CIRCUIT
+
+Source: CI run [43198136717](https://github.com/RaceeyXo/CIRCUIT/actions/runs/43198136717), sandbox.
+The same three concurrent requests (0.6, 0.5, 0.3 NEAR) were run against one 1 NEAR budget.
+
+| | Paid out | Over budget |
+|---|---|---|
+| Baseline: shared hot wallet, budget kept off-chain, each agent checks a snapshot | 1.400 NEAR (3 transfers) | **+0.400 NEAR** |
+| CIRCUIT | 0.800 NEAR (0.5 + 0.3; 0.6 rejected with `INSUFFICIENT_BUDGET`) | 0 |
+
+The baseline models the off-chain race deterministically: every agent reads the shared
+"spent so far" value before any agent pays. The same run at 0.1 scale paid 0.14 against 0.10.
+
 ## Correctness evidence
 
 | Suite | Result | What it covers |
