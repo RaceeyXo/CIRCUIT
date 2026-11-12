@@ -24,8 +24,12 @@ export function setScale(factor: number) {
   scalePpm = BigInt(Math.round(factor * 1_000_000));
 }
 const N = (near: string) => (parseNear(near) * scalePpm) / 1_000_000n;
-/** Balance for accounts that sign: gas plus concurrently attached storage deposits (0.02 each). */
-const GAS_MONEY = parseNear("0.2");
+/**
+ * Balance for an account that signs with `lanes` keys. Each in-flight transaction locks its
+ * attached deposit (0.02) plus its prepaid gas up front: about 0.03 NEAR for 30 Tgas calls and
+ * 0.1 NEAR for `execute` (100 Tgas). Unused gas is refunded afterwards, but must be available first.
+ */
+const signerMoney = (lanes = 1) => parseNear("0.1") + BigInt(lanes) * parseNear("0.1");
 /** Balance for accounts that only receive payments and never sign. */
 const PASSIVE_MONEY = parseNear("0.01");
 const HOUR = 3_600n * SEC;
@@ -52,7 +56,7 @@ export function policy(p: Partial<Record<keyof PolicyJson, bigint | number>> = {
 
 /** Deploys a fresh contract, initialises it and funds the treasury with `budget`. */
 export async function setup(net: Network, wasm: string, scenario: string, budget: bigint): Promise<Ctx> {
-  const owner = await createActor(net, "owner", budget + GAS_MONEY);
+  const owner = await createActor(net, "owner", budget + signerMoney());
   // Covers storage staking for the ~230 KB wasm plus state; not part of the treasury.
   const contract = await deployContract(net, wasm, parseNear("3"));
   const client = new CircuitClient(net.rpcUrl, contract.id);
@@ -136,7 +140,7 @@ export async function specScenario(net: Network, wasm: string): Promise<Evidence
   const budget = N("1");
   const ctx = await setup(net, wasm, "spec", budget);
   const { client, ev } = ctx;
-  const pool = await createActor(net, "pool", GAS_MONEY, 3);
+  const pool = await createActor(net, "pool", signerMoney(3), 3);
   const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, PASSIVE_MONEY)));
   must(await register(ctx, ctx.owner, pool, null, policy(), budget));
 
@@ -203,11 +207,11 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
   const { client, ev } = ctx;
   const next = rng(seed);
 
-  const root = await createActor(net, "root", GAS_MONEY);
+  const root = await createActor(net, "root", signerMoney());
   const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
   must(await register(ctx, ctx.owner, root, null, policy({ max_counterparty_exposure: vendorCap }), budget));
   const lanes = Math.ceil(REQUESTS / AGENTS);
-  const agents = await Promise.all(Array.from({ length: AGENTS }, () => createActor(net, "agent", GAS_MONEY, lanes)));
+  const agents = await Promise.all(Array.from({ length: AGENTS }, () => createActor(net, "agent", signerMoney(lanes), lanes)));
   for (const a of agents) {
     must(await register(ctx, root, a, root, policy({ max_tx_amount: childAlloc, max_counterparty_exposure: vendorCap, max_delegated: 0 }), childAlloc));
   }
@@ -285,12 +289,12 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   const ctx = await setup(net, wasm, "attacks", budget);
   const { client, ev, owner } = ctx;
   const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
-  const stranger = await createActor(net, "stranger", GAS_MONEY);
+  const stranger = await createActor(net, "stranger", signerMoney());
 
   // Hierarchy: root → mid → leaf, plus root → 4 splitter children.
-  const root = await createActor(net, "root", GAS_MONEY);
-  const mid = await createActor(net, "mid", GAS_MONEY);
-  const leaf = await createActor(net, "leaf", GAS_MONEY, 5);
+  const root = await createActor(net, "root", signerMoney());
+  const mid = await createActor(net, "mid", signerMoney());
+  const leaf = await createActor(net, "leaf", signerMoney(5), 5);
   must(await register(ctx, owner, root, null, policy({ max_counterparty_exposure: N("0.3") }), N("8")));
   must(await register(ctx, root, mid, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: N("1") }), N("2")));
   must(await register(ctx, mid, leaf, mid, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("1")));
@@ -323,7 +327,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("C. reservation untouched by forgeries", still!.status === "Reserved", still!.status);
 
   // D. Counterparty splitting: root's 0.3 NEAR cap on one sink binds all its children.
-  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", GAS_MONEY)));
+  const splitters = await Promise.all(Array.from({ length: 4 }, () => createActor(net, "split", signerMoney())));
   for (const s of splitters) must(await register(ctx, root, s, root, policy({ max_counterparty_exposure: N("0.3"), max_delegated: 0 }), N("0.2")));
   const sink = await createActor(net, "sink", PASSIVE_MONEY);
   const split = await reserveAll(ctx, "splitting", splitters.map((s, i) => ({ agent: s, requestId: `split-${i}`, counterparty: sink.id, amount: N("0.15") })));
@@ -343,7 +347,7 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("E. healthy ancestor can release the frozen reservation", rel.ok && rel.value?.release_reason === "Ancestor", rel.ok ? rel.value!.release_reason ?? "" : rel.rejection?.code ?? "");
 
   // F. Hoarding: reserve the whole budget with a short TTL; it expires and anyone can free it.
-  const hoarder = await createActor(net, "hoard", GAS_MONEY);
+  const hoarder = await createActor(net, "hoard", signerMoney());
   must(await register(ctx, owner, hoarder, null, policy(), N("0.5")));
   const h = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "hoard", vendor.id, N("0.5"), 3n * SEC));
   const blocked = ev.record("hoarding", hoarder.id, "reserve", await client.reserve(hoarder.signer(), "next", vendor.id, 1n, HOUR));
@@ -376,7 +380,7 @@ export async function baselineScenario(net: Network): Promise<Evidence> {
   const budget = N("1");
   const amounts = [N("0.6"), N("0.5"), N("0.3")];
   // The wallet holds more than the budget, as real hot wallets do; the budget is the policy.
-  const wallet = await createActor(net, "hotwallet", budget * 3n + GAS_MONEY, amounts.length);
+  const wallet = await createActor(net, "hotwallet", budget * 3n + signerMoney(amounts.length), amounts.length);
   const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, PASSIVE_MONEY)));
   const ev = new Evidence("baseline", net.kind, wallet.id);
   let spentSoFar = 0n; // the shared off-chain "ledger" each agent reads
