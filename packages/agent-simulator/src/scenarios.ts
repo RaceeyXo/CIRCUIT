@@ -62,10 +62,16 @@ export function policy(p: Partial<Record<keyof PolicyJson, bigint | number>> = {
 }
 
 /** Deploys a fresh contract, initialises it and funds the treasury with `budget`. */
-export async function setup(net: Network, wasm: string, scenario: string, budget: bigint): Promise<Ctx> {
-  const owner = await createActor(net, "owner", budget + signerMoney());
+export async function setup(
+  net: Network,
+  wasm: string,
+  scenario: string,
+  budget: bigint,
+  money: { owner: bigint; contract: bigint } = { owner: signerMoney(), contract: parseNear("2.5") },
+): Promise<Ctx> {
+  const owner = await createActor(net, "owner", budget + money.owner);
   // Covers storage staking for the ~230 KB wasm plus state; not part of the treasury.
-  const contract = await deployContract(net, wasm, parseNear("2.5"));
+  const contract = await deployContract(net, wasm, money.contract);
   const client = new CircuitClient(net.rpcUrl, contract.id);
   const ev = new Evidence(scenario, net.kind, contract.id);
   must(ev.record("setup", contract.id, "new", await client.init(contract.signer(), owner.id)));
@@ -293,7 +299,8 @@ export async function concurrencyScenario(net: Network, wasm: string, seed = 0x5
 
 export async function attackScenario(net: Network, wasm: string): Promise<Evidence> {
   const budget = N("10");
-  const ctx = await setup(net, wasm, "attacks", budget);
+  // Owner signs sequentially; the ~230 KB wasm needs 2.300 NEAR of storage, later writes are paid by deposits.
+  const ctx = await setup(net, wasm, "attacks", budget, { owner: ATTACK_MONEY.sequential, contract: parseNear("2.4") });
   const { client, ev, owner } = ctx;
   const vendor = await createActor(net, "vendor", PASSIVE_MONEY);
   const stranger = await createActor(net, "stranger", ATTACK_MONEY.sequential);

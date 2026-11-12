@@ -49,7 +49,7 @@ jobs:
           # Tag testnet-run-<scenario>-N runs one scenario (e.g. testnet-run-attacks-1); otherwise all.
           SCENARIO=$(echo "$GITHUB_REF_NAME" | sed -n 's/^testnet-run-\(baseline\|spec\|concurrency\|attacks\)-.*/\1/p')
           # The attack checks are qualitative (rejection codes), so they run at a smaller scale.
-          SCALE=0.1; [ "$SCENARIO" = attacks ] && SCALE=0.05
+          SCALE=0.1; [ "$SCENARIO" = attacks ] && SCALE=0.03
           node dist/cli.js ${SCENARIO:-all} --network external --scale $SCALE \
             --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet 2>&1 | tee $GITHUB_WORKSPACE/sim.log
       - name: Annotate failure
