@@ -69,7 +69,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - name: Build TypeScript packages
-        run: pnpm install --frozen-lockfile && pnpm -r build && pnpm -r test
+        run: pnpm install --frozen-lockfile && pnpm -r build && pnpm -r test  # includes the dashboard build
       - name: Agent simulator against a local sandbox node
         working-directory: packages/agent-simulator
         run: |
