@@ -1,11 +1,20 @@
-name: dashboard
+name: site
 
-# Builds the site (landing page + read-only console, Next.js static export) and publishes it to GitHub Pages.
-# Manual only: Actions → dashboard → Run workflow. Requires Pages source = "GitHub Actions".
-# Set repository variables CIRCUIT_CONTRACT_ID (and optionally CIRCUIT_NETWORK) to choose the default contract.
+# Builds the site (landing page + read-only console, Next.js static export) and publishes it to
+# GitHub Pages. Requires Settings → Pages → Source = "GitHub Actions".
+# Runs on pushes to main that touch the site or the evidence, or manually (Actions → site).
+# The console defaults to the testnet concurrency contract; override with the repository variable
+# CIRCUIT_CONTRACT_ID (and optionally CIRCUIT_NETWORK).
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/shared/**"
+      - "evidence/**"
+      - ".github/workflows/pages.yml"
 
 permissions:
   contents: read
@@ -33,7 +42,7 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_NETWORK: ${{ vars.CIRCUIT_NETWORK || 'testnet' }}
-          NEXT_PUBLIC_CONTRACT_ID: ${{ vars.CIRCUIT_CONTRACT_ID }}
+          NEXT_PUBLIC_CONTRACT_ID: ${{ vars.CIRCUIT_CONTRACT_ID || 'circuitmwdgosbr12.circuit-demo.testnet' }}
         run: |
           mkdir -p public/evidence
           if ls ../../evidence/testnet/*.json >/dev/null 2>&1; then
