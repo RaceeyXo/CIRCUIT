@@ -44,8 +44,26 @@ export async function connect(kind: "sandbox" | "external"): Promise<Network> {
   }
   const rpcUrl = required("CIRCUIT_RPC_URL");
   const provider = new JsonRpcProvider({ url: rpcUrl });
-  const funder = new Account(required("CIRCUIT_FUNDER_ID"), provider, required("CIRCUIT_FUNDER_KEY") as KeyPairString);
+  const funderId = clean(required("CIRCUIT_FUNDER_ID"));
+  const key = clean(required("CIRCUIT_FUNDER_KEY"));
+  // Diagnostics never print the key itself.
+  if (!/^ed25519:[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(key)) {
+    throw new Error(`CIRCUIT_FUNDER_KEY is not an "ed25519:<base58>" private key (length ${key.length}, prefix "${key.slice(0, 8)}")`);
+  }
+  const pair = KeyPair.fromString(key as KeyPairString);
+  const funder = new Account(funderId, provider, key as KeyPairString);
+  try {
+    await funder.getAccessKey(pair.getPublicKey());
+  } catch (err) {
+    throw new Error(`key ${pair.getPublicKey().toString()} is not an access key of ${funderId}: ${(err as Error).message}`);
+  }
+  console.log(`funder ${funderId} via ${rpcUrl}, key ${pair.getPublicKey().toString()}`);
   return { kind, rpcUrl, provider, funder, stop: async () => {} };
+}
+
+/** Strips whitespace and wrapping quotes that often come along when secrets are pasted. */
+function clean(v: string): string {
+  return v.trim().replace(/^["']|["']$/g, "").trim();
 }
 
 function required(name: string): string {

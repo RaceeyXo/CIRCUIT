@@ -47,6 +47,11 @@ jobs:
           test -n "$CIRCUIT_FUNDER_ID" || { echo "::error::set the CIRCUIT_FUNDER_ID / CIRCUIT_FUNDER_KEY repository secrets"; exit 1; }
           node dist/cli.js all --network external --scale 0.1 \
             --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet
+      - name: Annotate failure
+        if: failure()
+        run: |
+          msg=$(grep -vE '^\s*$' sim.log | tail -40 | cut -c1-300 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=testnet simulator log (tail)::$msg"
       - name: Summary
         if: always()
         run: node .github/scripts/sim-summary.mjs evidence/testnet
