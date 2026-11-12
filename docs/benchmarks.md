@@ -1,7 +1,35 @@
 # Benchmarks and experiment results
 
 Every number in this file comes from a recorded run. Each section names its source. Nothing here
-is an estimate. Testnet results will be added once the testnet deployment is approved and done.
+is an estimate.
+
+## NEAR testnet
+
+Every scenario passed against contracts deployed on NEAR testnet. The full reports, with every
+transaction hash, are in [`evidence/testnet/`](../evidence/testnet). Amounts are scaled down to
+save faucet NEAR; scaling changes magnitudes only, never the checks.
+
+| Scenario | Contract | Result | Txs | CI run |
+|---|---|---|---|---|
+| baseline (no CIRCUIT) | `hotwalletmwdgni7f1.circuit-demo.testnet` (plain wallet) | overspent 0.14 vs 0.10, as expected | 3 | [43208727340](https://github.com/RaceeyXo/CIRCUIT/actions/runs/43208727340) |
+| spec 0.6 / 0.5 / 0.3 | [`circuitmwdgnus36.circuit-demo.testnet`](https://testnet.nearblocks.io/address/circuitmwdgnus36.circuit-demo.testnet) | 8/8 | 8 | [43208727340](https://github.com/RaceeyXo/CIRCUIT/actions/runs/43208727340) |
+| concurrency: 10 agents, 24 requests | [`circuitmwdgosbr12.circuit-demo.testnet`](https://testnet.nearblocks.io/address/circuitmwdgosbr12.circuit-demo.testnet) | 9/9 | 48 | [43208727340](https://github.com/RaceeyXo/CIRCUIT/actions/runs/43208727340) |
+| attacks: escalation, duplicates, forged callback, splitting, revocation, hoarding, failed transfer | [`circuitmwdkvj042.circuit-demo.testnet`](https://testnet.nearblocks.io/address/circuitmwdkvj042.circuit-demo.testnet) | 19/19 | 37 | [43226562697](https://github.com/RaceeyXo/CIRCUIT/actions/runs/43226562697) |
+
+Selected testnet transactions (open on [testnet.nearblocks.io](https://testnet.nearblocks.io)):
+
+| What | Outcome | Tx |
+|---|---|---|
+| Forged payout callback, sent by the agent | rejected: method is private | `E3Eq3raSmUxYXAjd4QUMPjGNzLvChf9jfKFNd47CyAG8` |
+| Forged payout callback, sent by the owner | rejected: method is private | `Ei8dHL735xxdspz72Q7Y2Y7xdhDveakZk9rLQPu98QFK` |
+| Reserve by a descendant of a revoked agent | `ANCESTOR_REVOKED` | `8vxuGBZMGZsKj5BQCXm2jxtJ8rB1q7shBoLCatE9U7UZ` |
+| Execute by a descendant of a revoked agent | `ANCESTOR_REVOKED` | `Hk9uE5GN1af1FiGL4cY5Pk1pnnmBCYgSimC86hoKT9Z6` |
+| Reused request id with a different amount | `REQUEST_ID_CONFLICT` | `2CSog8HGHGEzPCNqVrK8CwWY8pBPrLR2UidnPQcnVAyP` |
+
+Testnet concurrency run (scale 0.1, seed `0x5eed`): 1.3815 NEAR requested against a 1.0 NEAR
+treasury, 0.5728 accepted (11 requests, all settled), 13 rejected (5 `INSUFFICIENT_BUDGET`, 8
+`COUNTERPARTY_LIMIT`), across 3 blocks. `reserve` gas about 4.0 Tgas (rejection about 2.6), `execute`
+about 5.8 Tgas. Time to final: p50 4.45 s for `reserve`, 5.37 s for `execute`.
 
 ## Environment
 

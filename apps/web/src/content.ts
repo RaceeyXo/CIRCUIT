@@ -76,7 +76,7 @@ export const caps = [
   { label: "Reservation lifetime", value: "≤ 24 h" },
 ];
 
-// Outcomes asserted by the attack scenario (sandbox CI; testnet run pending).
+// Outcomes asserted by the attack scenario; passed 19/19 on NEAR testnet (CI run 43226562697).
 export const attacks = [
   { title: "Delegate more than you have", result: "INSUFFICIENT_BUDGET", ok: false },
   { title: "Give a child looser limits than yours", result: "POLICY_EXCEEDS_PARENT", ok: false },

@@ -271,7 +271,7 @@ function Attacks() {
         <span className="label">Under attack</span>
         <h2 className={h2Big}>We tried to break it</h2>
         <p className="mx-auto max-w-[640px] text-[19px] leading-relaxed text-ink-2">
-          Each attack runs as real signed transactions against the contract on a NEAR node. These are the outcomes the chain returned.
+          Each attack ran as real signed transactions against a contract deployed on NEAR testnet. These are the outcomes the chain returned.
         </p>
       </section>
       <section className="mx-auto mt-14 grid max-w-[1220px] gap-3.5 sm:grid-cols-2 lg:grid-cols-4">

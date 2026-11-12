@@ -67,7 +67,7 @@ Details: [docs/benchmarks.md](docs/benchmarks.md).
 | Property tests: 256 random operation sequences, all invariants rechecked after every step, rollback on rejection | passed |
 | Mutation check: a planted accounting bug | caught by both a unit and a property test |
 | Sandbox tests on real receipts: payout, forged callback, failed transfer, refunds, revocation, expiry, concurrency | 7 passed |
-| Agent simulator (TypeScript, real signed transactions) | spec 8/8, concurrency 9/9, attacks 19/19 |
+| Agent simulator (TypeScript, real signed transactions), sandbox **and NEAR testnet** | spec 8/8, concurrency 9/9, attacks 19/19 |
 
 **Concurrency experiment.** 10 agents send 24 requests concurrently (13.8 NEAR requested
 against a 10 NEAR treasury, 1 NEAR per agent, 6 NEAR branch cap on one vendor). All 24 landed
@@ -77,8 +77,10 @@ in **one block**.
 - Every limit held in every ordering tried.
 - Gas: `reserve` ≈ 3.6 Tgas, a rejection ≈ 2.6 Tgas, `execute` with callback ≈ 5.45 Tgas.
 
-**Testnet:** see [`evidence/testnet/`](evidence/testnet) for every transaction hash, once the
-testnet run has been made.
+**NEAR testnet:** all four scenarios passed against deployed contracts: spec 8/8, concurrency 9/9,
+attacks 19/19, and the baseline overspent as expected. Contract accounts, CI runs and selected
+transaction hashes are in [docs/benchmarks.md](docs/benchmarks.md#near-testnet). The full reports
+are in [`evidence/testnet/`](evidence/testnet).
 
 ## Repository
 
