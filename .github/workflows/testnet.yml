@@ -47,7 +47,7 @@ jobs:
           test -n "$CIRCUIT_FUNDER_ID" || { echo "::error::set the CIRCUIT_FUNDER_ID / CIRCUIT_FUNDER_KEY repository secrets"; exit 1; }
           set -o pipefail
           # Tag testnet-run-<scenario>-N runs one scenario (e.g. testnet-run-attacks-1); otherwise all.
-          SCENARIO=$(echo "$GITHUB_REF_NAME" | sed -n 's/^testnet-run-\(baseline\|spec\|concurrency\|attacks\)-.*//p')
+          SCENARIO=$(echo "$GITHUB_REF_NAME" | sed -n 's/^testnet-run-\(baseline\|spec\|concurrency\|attacks\)-.*/\1/p')
           node dist/cli.js ${SCENARIO:-all} --network external --scale 0.1 \
             --wasm $GITHUB_WORKSPACE/target/near/circuit/circuit.wasm --out $GITHUB_WORKSPACE/evidence/testnet 2>&1 | tee $GITHUB_WORKSPACE/sim.log
       - name: Annotate failure
