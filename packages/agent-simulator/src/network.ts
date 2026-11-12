@@ -45,10 +45,12 @@ export async function connect(kind: "sandbox" | "external"): Promise<Network> {
   const rpcUrl = required("CIRCUIT_RPC_URL");
   const provider = new JsonRpcProvider({ url: rpcUrl });
   const funderId = clean(required("CIRCUIT_FUNDER_ID"));
-  const key = clean(required("CIRCUIT_FUNDER_KEY"));
-  // Diagnostics never print the key itself.
+  let key = clean(required("CIRCUIT_FUNDER_KEY"));
+  // Accept the bare base58 secret too (the "ed25519:" prefix is often left off when copying).
+  if (/^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(key)) key = `ed25519:${key}`;
+  // Diagnostics never print any part of the key.
   if (!/^ed25519:[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(key)) {
-    throw new Error(`CIRCUIT_FUNDER_KEY is not an "ed25519:<base58>" private key (length ${key.length}, prefix "${key.slice(0, 8)}")`);
+    throw new Error(`CIRCUIT_FUNDER_KEY is not an ed25519 private key (length ${key.length})`);
   }
   const pair = KeyPair.fromString(key as KeyPairString);
   const funder = new Account(funderId, provider, key as KeyPairString);
