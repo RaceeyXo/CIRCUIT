@@ -293,18 +293,22 @@ budget, so all of them approve → over-commitment. The baseline is labelled cle
 only in the simulator, and runs on the same accounts and amounts so the comparison is
 like-for-like.
 
-## 10. Off-chain stack
+## 10. Off-chain stack (as built)
 
-* `packages/shared`: types mirroring the contract JSON, unit conversion (bigint only), and
-  a contract client on `near-api-js`. The v7 API surface will be checked before use `[VERIFY]`.
-* `packages/agent-simulator`: a seeded PRNG, agent behaviours (honest, greedy, duplicate
-  spammer, escalator, splitter, holder), scenario definitions, and the baseline.
-* `apps/api`: Fastify. Runs scenarios, proxies view calls, and writes every submitted tx
-  outcome (hash, method, args, status, error code, gas burnt, logs) to Postgres. Every row
-  links to the explorer by tx hash. Limitation: txs submitted by other clients show up in
-  state but not in the activity feed.
-* `apps/web`: Next.js + Tailwind. Treasury, hierarchy, reservations, security events,
-  simulator, and baseline vs CIRCUIT. All numbers come from contract views or indexed outcomes.
+* `packages/shared`: types mirroring the contract JSON, bigint-only NEAR units, a parser for raw
+  RPC outcomes (status, rejection code, gas, NEP-297 events), and a client on `near-api-js` 7.4.
+  Transactions wait for `FINAL`.
+* `packages/agent-simulator`: `circuit-sim` with the `baseline`, `spec`, `concurrency` and
+  `attacks` scenarios.
+  - Every agent is its own account with several access keys, so its requests can be in flight
+    concurrently.
+  - Every transaction is recorded in a JSON evidence report.
+  - Invariants are rechecked from the views and from the contract account's real balance.
+  - `--scale` shrinks the amounts for testnet.
+* `apps/web`: a read-only Vite + TypeScript dashboard. It calls contract views directly over
+  RPC at final finality, holds no keys, and has an evidence tab that renders simulator reports.
+* **Cut for the deadline:** the Fastify API and the Postgres activity log. The simulator reports
+  and the explorer cover the transaction history.
 
 ## 11. Testing strategy
 
@@ -316,7 +320,10 @@ like-for-like.
 | Adversarial | attacks 1–9 at both unit and sandbox level | partly | spec §8 |
 | Concurrency experiment | TS script, 10 accounts, ≥ 20 concurrent txs, N shuffled orderings, sandbox **and** testnet | sandbox: needs Linux; testnet: yes | recorded in `docs/benchmarks.md` with raw outputs |
 
-## 12. Milestones (deadline 2026-11-14 — 5 working days, tight)
+## 12. Milestones (deadline 2026-11-14)
+
+Outcome: phases 0–5 are done. The API was cut (§10), and testnet runs through
+`.github/workflows/testnet.yml`. The original plan follows.
 
 | Day | Work | Exit criterion |
 |---|---|---|

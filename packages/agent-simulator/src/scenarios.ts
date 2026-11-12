@@ -2,7 +2,10 @@
 // several in-flight transactions per agent use separate access keys, like separate workers.
 // The simulator generates load and records outcomes. Every decision is the contract's.
 
-import { CircuitClient, parseNear, type PolicyJson, type TxOutcome } from "@circuit/shared";
+import { CircuitClient, interpretOutcome, parseNear, type PolicyJson, type TxOutcome } from "@circuit/shared";
+import { actions } from "near-api-js";
+
+const actionsTransfer = (amount: bigint) => actions.transfer(amount);
 
 import { Evidence, near } from "./evidence.js";
 import { checkInvariants } from "./invariants.js";
@@ -357,5 +360,44 @@ export async function attackScenario(net: Network, wasm: string): Promise<Eviden
   ev.check("G. failed transfer returns reservation to Reserved", gx.ok && gx.value === false && gv!.status === "Reserved" && gv!.failed_attempts === 1, `settled=${gx.value}, status ${gv!.status}, attempts ${gv!.failed_attempts}`);
 
   await checkInvariants(ev, net, client, "after all attacks");
+  return ev;
+}
+
+// ── Baseline: the same requests WITHOUT CIRCUIT (architecture §9) ────────────
+
+/**
+ * The common pattern CIRCUIT replaces: agents share a hot wallet and a budget rule kept
+ * off-chain. Each agent reads the budget snapshot, decides locally, then pays. This is the
+ * labelled *vulnerable* baseline; it runs the spec example's numbers for a like-for-like comparison.
+ */
+export async function baselineScenario(net: Network): Promise<Evidence> {
+  const budget = N("1");
+  const amounts = [N("0.6"), N("0.5"), N("0.3")];
+  // The wallet holds more than the budget, as real hot wallets do; the budget is the policy.
+  const wallet = await createActor(net, "hotwallet", budget * 3n + GAS_MONEY, amounts.length);
+  const vendors = await Promise.all(["va", "vb", "vc"].map((p) => createActor(net, p, GAS_MONEY)));
+  const ev = new Evidence("baseline", net.kind, wallet.id);
+  let spentSoFar = 0n; // the shared off-chain "ledger" each agent reads
+
+  const before = await Promise.all(vendors.map((v) => balanceOf(net, v.id)));
+  await Promise.all(
+    amounts.map(async (amount, i) => {
+      const snapshot = spentSoFar; // every agent reads before anyone has paid
+      await new Promise((r) => setTimeout(r, 0));
+      if (snapshot + amount > budget) return; // local check against a stale snapshot
+      const raw = await wallet.signer().signAndSendTransaction({
+        receiverId: vendors[i]!.id,
+        actions: [actionsTransfer(amount)],
+        waitUntil: "FINAL",
+        throwOnFailure: false,
+      });
+      ev.record("pay", `agent-${i}`, "transfer", interpretOutcome(raw));
+      spentSoFar += amount;
+    }),
+  );
+  const after = await Promise.all(vendors.map((v) => balanceOf(net, v.id)));
+  const paid = sum(after.map((a, i) => a - before[i]!));
+  ev.check("[baseline, expected to overspend] total paid exceeds the budget", paid > budget, `paid ${near(paid)} against a ${near(budget)} budget (+${near(paid - budget)})`);
+  ev.metrics.baseline = { budget: near(budget), requested: near(sum(amounts)), paid: near(paid), overspend: near(paid - budget) };
   return ev;
 }

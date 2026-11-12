@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// circuit-sim <spec|concurrency|attacks|all> [--network sandbox|external] [--wasm path] [--out dir] [--seed n] [--scale f]
+// circuit-sim <baseline|spec|concurrency|attacks|all> [--network sandbox|external] [--wasm path] [--out dir] [--seed n] [--scale f]
 //
 // Exit code 0 only if every check of every scenario passed. Reports are written as JSON.
 
@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 
 import type { Evidence } from "./evidence.js";
 import { connect } from "./network.js";
-import { attackScenario, concurrencyScenario, setScale, specScenario } from "./scenarios.js";
+import { attackScenario, baselineScenario, concurrencyScenario, setScale, specScenario } from "./scenarios.js";
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -23,6 +23,7 @@ const { values, positionals } = parseArgs({
 const which = positionals[0] ?? "all";
 const network = values.network === "external" ? "external" : "sandbox";
 const runs: Record<string, (net: Awaited<ReturnType<typeof connect>>) => Promise<Evidence>> = {
+  baseline: (net) => baselineScenario(net),
   spec: (net) => specScenario(net, values.wasm!),
   concurrency: (net) => concurrencyScenario(net, values.wasm!, Number(values.seed)),
   attacks: (net) => attackScenario(net, values.wasm!),
